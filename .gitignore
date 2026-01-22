@@ -1,0 +1,18 @@
+# Maven
+target/
+*.jar
+*.war
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+
+# Database (не заливаємо саму базу даних, тільки код)
+*.db
+*.sqlite
+/src/main/resources/db/*.db
+
+# OS junk
+.DS_Store
+Thumbs.db
