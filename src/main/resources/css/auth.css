@@ -1,0 +1,22 @@
+
+.login-card {
+    -fx-background-color: -color-white;
+    -fx-background-radius: 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 20, 0, 0, 10);
+    -fx-padding: 50 60;
+}
+
+.label-title {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-text-header;
+}
+
+.label-quote {
+    -fx-font-size: 14px;
+    -fx-font-style: italic;
+    -fx-text-fill: -color-text-muted;
+    -fx-padding: 5 0 20 0;
+    -fx-text-alignment: CENTER;
+    -fx-wrap-text: true;
+}
