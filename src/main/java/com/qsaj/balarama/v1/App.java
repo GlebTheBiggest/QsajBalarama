@@ -18,6 +18,9 @@ public class App extends Application {
     @Override
     public void init() {
         this.injector = Guice.createInjector(new AppModule());
+
+        injector.getInstance(jakarta.persistence.EntityManagerFactory.class);
+        System.out.println("Database connected successfully!");
     }
 
     @Override

@@ -1,0 +1,59 @@
+/* layout.css - Стилі для меню зліва */
+
+.sidebar {
+    -fx-background-color: #ffffff;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 0);
+    -fx-min-width: 250px;
+}
+
+.sidebar-logo-top {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-primary; /* З base.css */
+}
+
+.sidebar-logo-bottom {
+    -fx-font-size: 14px;
+    -fx-text-fill: -color-text-muted;
+    -fx-letter-spacing: 2px;
+}
+
+.sidebar-separator {
+    -fx-padding: 0 20 0 20;
+}
+
+/* Кнопки меню */
+.menu-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: -color-text-body;
+    -fx-font-size: 15px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 12 20;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.menu-button SVGPath {
+    -fx-fill: -color-text-muted;
+}
+
+/* Ховер ефект */
+.menu-button:hover {
+    -fx-background-color: #F8F9FA;
+    -fx-text-fill: -color-primary;
+}
+.menu-button:hover SVGPath {
+    -fx-fill: -color-primary;
+}
+
+/* Кнопка Logout */
+.menu-button-logout {
+    -fx-background-color: transparent;
+    -fx-text-fill: #e74c3c; /* Червоний */
+    -fx-font-size: 14px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 12 20;
+    -fx-cursor: hand;
+}
+.menu-button-logout SVGPath { -fx-fill: #e74c3c; }
+.menu-button-logout:hover { -fx-background-color: #FFF5F5; }

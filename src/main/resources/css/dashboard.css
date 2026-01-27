@@ -1,0 +1,74 @@
+/* dashboard.css */
+
+.dashboard-container {
+    -fx-padding: 30;
+}
+
+.page-title {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-text-header;
+}
+.page-subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: -color-text-muted;
+}
+
+/* Картки статистики */
+.stat-card {
+    -fx-background-color: white;
+    -fx-background-radius: 15;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);
+    -fx-padding: 20;
+}
+
+.stat-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: -color-text-muted;
+    -fx-font-weight: bold;
+}
+.stat-value {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-padding: 5 0 0 0;
+}
+
+/* Кольорові акценти для карток */
+.card-blue  .stat-value { -fx-text-fill: -color-text-header; }
+.card-red   .stat-value { -fx-text-fill: #e74c3c; }
+.card-green .stat-value { -fx-text-fill: -color-primary; }
+
+/* Велика картка контенту */
+.content-card {
+    -fx-background-color: white;
+    -fx-background-radius: 15;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);
+    -fx-padding: 20;
+}
+.card-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-text-header;
+    -fx-padding: 0 0 10 0;
+}
+
+/* Кнопки дій */
+.button-action-red {
+    -fx-background-color: #FFF5F5;
+    -fx-text-fill: #e74c3c;
+    -fx-background-radius: 8;
+    -fx-padding: 10;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+}
+.button-action-red:hover { -fx-background-color: #FFEBEB; }
+
+.button-action-green {
+    -fx-background-color: #E8F6F3;
+    -fx-text-fill: -color-primary;
+    -fx-background-radius: 8;
+    -fx-padding: 10;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+}
+.button-action-green:hover { -fx-background-color: #D1F2EB; }

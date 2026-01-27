@@ -20,3 +20,11 @@
     -fx-text-alignment: CENTER;
     -fx-wrap-text: true;
 }
+
+.strength-bar-weak .bar { -fx-background-color: #e74c3c; }   /* Червоний */
+.strength-bar-medium .bar { -fx-background-color: #f1c40f; } /* Жовтий */
+.strength-bar-strong .bar { -fx-background-color: #2ecc71; } /* Зелений */
+.strength-bar-empty .bar { -fx-background-color: transparent; }
+
+.progress-bar .track { -fx-background-color: #F1F3F4; -fx-background-radius: 2; }
+.progress-bar .bar { -fx-background-radius: 2; }
