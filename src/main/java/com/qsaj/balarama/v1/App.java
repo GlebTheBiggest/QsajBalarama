@@ -28,10 +28,16 @@ public class App extends Application {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
         loader.setControllerFactory(injector::getInstance);
         Parent root = loader.load();
-        Scene scene = new Scene(root, 1080, 720);
-        stage.setMinWidth(900);
-        stage.setMinHeight(600);
-        stage.setTitle("Qsaj Balarama - Login");
+        Scene scene = new Scene(root, 1280, 900);
+
+        // Також додаємо глобальні стилі сюди, якщо ти вибрав цей спосіб (опціонально)
+        // scene.getStylesheets().add(getClass().getResource("/css/base.css").toExternalForm());
+
+        // Мінімальний розмір теж трохи збільшимо
+        stage.setMinWidth(1000);
+        stage.setMinHeight(800);
+
+        stage.setTitle("Qsaj Balarama");
         stage.setScene(scene);
         stage.show();
     }

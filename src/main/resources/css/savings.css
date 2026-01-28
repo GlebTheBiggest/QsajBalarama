@@ -1,0 +1,41 @@
+/* Картка однієї цілі */
+.goal-card {
+    -fx-background-color: white;
+    -fx-background-radius: 15;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 2);
+    -fx-padding: 20;
+    -fx-min-width: 300px;
+    -fx-max-width: 300px;
+}
+
+.goal-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-text-header;
+}
+
+.goal-progress-text {
+    -fx-font-size: 12px;
+    -fx-text-fill: -color-text-muted;
+}
+
+/* Кнопка "Додати кошти" всередині картки */
+.button-add-funds {
+    -fx-background-color: #E8F6F3;
+    -fx-text-fill: -color-primary;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5;
+    -fx-cursor: hand;
+}
+.button-add-funds:hover {
+    -fx-background-color: -color-primary;
+    -fx-text-fill: white;
+}
+
+/* Кнопка видалення (маленька) */
+.button-delete-icon {
+    -fx-background-color: transparent;
+    -fx-text-fill: #e74c3c;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}

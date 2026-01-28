@@ -72,3 +72,21 @@
     -fx-font-weight: bold;
 }
 .button-action-green:hover { -fx-background-color: #D1F2EB; }
+
+.budget-bar .track {
+    -fx-background-color: #ecf0f1;
+    -fx-background-radius: 4;
+}
+.budget-bar .bar {
+    -fx-background-radius: 4;
+    /* Колір задається динамічно в контролері через -fx-accent */
+}
+
+/* Велике привітання */
+.welcome-text {
+    -fx-font-size: 36px;
+    -fx-font-weight: 900; /* Extra Bold */
+    -fx-text-fill: -color-text-header;
+    -fx-effect: dropshadow(one-pass-box, rgba(0,0,0,0.1), 0, 1, 0, 0);
+    -fx-padding: 0 0 10 0;
+}

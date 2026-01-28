@@ -13,16 +13,16 @@
 <BorderPane fx:id="rootPane"
             xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.qsaj.balarama.v1.controller.MainLayoutController"
-            prefWidth="1080" prefHeight="720">
+            fx:controller="com.qsaj.balarama.v1.controller.MainLayoutController">
 
     <stylesheets>
         <String fx:value="/css/base.css" />
-        <String fx:value="/css/layout.css" /> </stylesheets>
+        <String fx:value="/css/layout.css" />
+    </stylesheets>
 
     <left>
         <VBox spacing="10" styleClass="sidebar">
-            <VBox alignment="CENTER_LEFT" spacing="5">
+            <VBox alignment="CENTER_LEFT" spacing="0">
                 <padding>
                     <Insets top="20" right="20" bottom="20" left="20"/>
                 </padding>
@@ -46,6 +46,12 @@
                 <Button text="Transactions" styleClass="menu-button" onAction="#showTransactions">
                     <graphic>
                         <SVGPath content="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z" scaleX="0.7" scaleY="0.7"/>
+                    </graphic>
+                </Button>
+
+                <Button text="Savings Goals" styleClass="menu-button" onAction="#showSavingsGoals">
+                    <graphic>
+                        <SVGPath content="M15 10c0-4.42-3.58-8-8-8s-8 3.58-8 8c0 2.03.76 3.87 2 5.28V23l6-2 6 2v-7.72c1.24-1.41 2-3.25 2-5.28zm-8-5c2.76 0 5 2.24 5 5s-2.24 5-5 5-5-2.24-5-5 2.24-5 5-5z" scaleX="0.7" scaleY="0.7"/>
                     </graphic>
                 </Button>
 

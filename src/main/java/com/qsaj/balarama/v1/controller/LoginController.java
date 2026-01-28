@@ -5,6 +5,7 @@ import com.google.inject.Injector;
 import com.qsaj.balarama.v1.model.User;
 import com.qsaj.balarama.v1.service.AuthService;
 import com.qsaj.balarama.v1.service.QuoteService;
+import com.qsaj.balarama.v1.session.UserSession;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -32,12 +33,14 @@ public class LoginController {
     private final QuoteService quoteService;
     private final Injector injector;
     private final AuthService authService;
+    private final UserSession userSession;
 
     @Inject
-    public LoginController(QuoteService quoteService, Injector injector, AuthService authService) {
+    public LoginController(QuoteService quoteService, Injector injector, AuthService authService, UserSession userSession) {
         this.quoteService = quoteService;
         this.injector = injector;
         this.authService = authService;
+        this.userSession = userSession;
     }
 
     @FXML
@@ -86,6 +89,7 @@ public class LoginController {
         try {
             User user = authService.authenticate(username, password);
             if (user != null) {
+                userSession.setCurrentUser(user);
                 System.out.println("Login successful for: " + user.getUsername());
                 navigateToMainLayout(event);
             } else {
@@ -102,10 +106,17 @@ public class LoginController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/main_layout.fxml"));
             loader.setControllerFactory(injector::getInstance);
             Parent root = loader.load();
+
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root, 1080, 720));
+
+            // Встановлюємо сцену
+            stage.setScene(new Scene(root)); // Розмір підтягнеться автоматично
+
+            // РОЗГОРТАННЯ НА ВЕСЬ ЕКРАН
+            stage.setMaximized(true);
+
             stage.setTitle("Qsaj Balarama - Dashboard");
-            stage.centerOnScreen();
+            // centerOnScreen вже не потрібен, якщо ми maximized
 
         } catch (IOException e) {
             e.printStackTrace();

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.qsaj.balarama.v1.controller.SavingsController"
+      spacing="20" styleClass="dashboard-container">
+
+    <stylesheets>
+        <String fx:value="/css/base.css" />
+        <String fx:value="/css/dashboard.css" />
+        <String fx:value="/css/savings.css" /> </stylesheets>
+
+    <VBox spacing="5">
+        <Label text="Savings Goals" styleClass="page-title"/>
+        <Label text="Set goals and track your progress." styleClass="page-subtitle"/>
+    </VBox>
+
+    <VBox styleClass="content-card" spacing="15" maxWidth="600">
+        <Label text="Create New Goal" styleClass="card-title"/>
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <TextField fx:id="goalNameField" promptText="Goal Name (e.g. Car)" HBox.hgrow="ALWAYS"/>
+            <TextField fx:id="targetAmountField" promptText="Target Amount (e.g. 5000)" prefWidth="150"/>
+            <Button text="+ Create" styleClass="button-primary" onAction="#handleCreateGoal"/>
+        </HBox>
+    </VBox>
+
+    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
+        <FlowPane fx:id="goalsContainer" hgap="20" vgap="20" style="-fx-padding: 5;">
+        </FlowPane>
+    </ScrollPane>
+
+</VBox>

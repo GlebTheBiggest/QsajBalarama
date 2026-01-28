@@ -1,0 +1,81 @@
+/* Загальний контейнер профілю */
+.profile-main-container {
+    -fx-padding: 20;
+}
+
+/* --- КАРТКИ СТАТИСТИКИ (Справа) --- */
+.stat-box {
+    -fx-background-color: white;
+    -fx-background-radius: 15;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 2);
+    -fx-padding: 15;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.stat-title {
+    -fx-font-size: 12px;
+    -fx-text-fill: -color-text-muted;
+    -fx-font-weight: bold;
+}
+
+.stat-value {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-text-header;
+}
+
+.stat-rank-value {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #f39c12; /* Золотистий колір для рангу */
+}
+
+/* --- ПОЛЯ ВВОДУ --- */
+.input-label {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-text-muted;
+}
+
+/* Кнопка оновлення (маленька, збоку) */
+.button-update-small {
+    -fx-background-color: transparent;
+    -fx-border-color: -color-primary;
+    -fx-border-radius: 5;
+    -fx-text-fill: -color-primary;
+    -fx-cursor: hand;
+    -fx-font-size: 11px;
+    -fx-padding: 5 10;
+}
+.button-update-small:hover {
+    -fx-background-color: -color-primary;
+    -fx-text-fill: white;
+}
+
+
+/* Ім'я користувача (Велике і Жирне) */
+.profile-name {
+    -fx-font-size: 32px; /* Значно більший шрифт */
+    -fx-font-weight: 900; /* Extra Bold (дуже жирний) */
+    -fx-text-fill: -color-text-header; /* Темно-синій */
+    -fx-effect: dropshadow(one-pass-box, rgba(0,0,0,0.1), 0, 1, 0, 0); /* Легка тінь для об'єму */
+}
+
+/* Пошта (Більша, ніж була, але менша за ім'я) */
+.profile-email-muted {
+    -fx-font-size: 16px;
+    -fx-font-weight: normal;
+    -fx-text-fill: -color-text-muted; /* Сірий */
+    -fx-opacity: 0.8;
+}
+
+/* Контейнер аватара (Залиш без змін, просто для контексту) */
+.avatar-container {
+    -fx-alignment: CENTER;
+    -fx-background-color: -color-primary;
+    -fx-background-radius: 50%;
+    -fx-min-width: 120px;
+    -fx-min-height: 120px;
+    -fx-max-width: 120px;
+    -fx-max-height: 120px;
+}

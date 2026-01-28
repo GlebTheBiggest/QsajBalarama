@@ -27,7 +27,6 @@ public class MainLayoutController {
 
     @FXML
     public void initialize() {
-        // При відкритті програми відразу показуємо Дашборд
         showDashboard();
     }
 
@@ -40,33 +39,38 @@ public class MainLayoutController {
 
     @FXML
     private void showTransactions() {
-        // Поки що немає файлу, тому просто вивід в консоль (або створиш transaction.fxml пізніше)
-        System.out.println("Navigate to Transactions");
-        // loadView("/fxml/transactions.fxml");
+        loadView("/fxml/transactions.fxml");
     }
 
     @FXML
     private void showAnalytics() {
+        // Поки що заглушка, або можна видалити, якщо замінив на Savings
         System.out.println("Navigate to Analytics");
     }
 
     @FXML
+    private void showSavingsGoals() {
+        loadView("/fxml/savings.fxml");
+    }
+
+    @FXML
     private void showProfile() {
-        System.out.println("Navigate to Profile");
+        loadView("/fxml/profile.fxml");
     }
 
     @FXML
     private void handleLogout(ActionEvent event) {
         try {
-            // Завантажуємо екран логіну
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
             loader.setControllerFactory(injector::getInstance);
             Parent loginRoot = loader.load();
 
-            // Отримуємо поточне вікно і міняємо сцену повністю
             Stage stage = (Stage) rootPane.getScene().getWindow();
-            stage.setScene(new Scene(loginRoot, 1080, 720));
+
+            // ВИПРАВЛЕНО: Розмір вікна при виході (1280x800)
+            stage.setScene(new Scene(loginRoot, 1280, 800));
             stage.setTitle("Qsaj Balarama - Login");
+            stage.centerOnScreen();
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -78,15 +82,9 @@ public class MainLayoutController {
     private void loadView(String fxmlPath) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
-
-            // Критично важливо: передаємо Guice Injector для створення контролерів вкладених view
             loader.setControllerFactory(injector::getInstance);
-
             Node view = loader.load();
-
-            // Вставляємо завантажене view у центр BorderPane
             rootPane.setCenter(view);
-
         } catch (IOException e) {
             System.err.println("Could not load view: " + fxmlPath);
             e.printStackTrace();

@@ -37,6 +37,22 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public void update(User user) {
+        EntityManager em = entityManagerProvider.get();
+        EntityTransaction transaction = null;
+        try (em) {
+            transaction = em.getTransaction();
+            transaction.begin();
+            em.merge(user);
+            transaction.commit();
+        } catch (Exception e) {
+            assert transaction != null;
+            if (transaction.isActive()) transaction.rollback();
+            throw e;
+        }
+    }
+
+    @Override
     public Optional<User> findByUsername(String username) {
         try (EntityManager em = entityManagerProvider.get()) {
             TypedQuery<User> query = em.createQuery(
