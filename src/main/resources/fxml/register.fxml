@@ -10,8 +10,8 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.SVGPath?>
-
 <?import javafx.scene.control.ProgressBar?>
+
 <StackPane xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="com.qsaj.balarama.v1.controller.RegisterController">
@@ -49,7 +49,7 @@
                     <Button styleClass="icon-button" onAction="#togglePasswordVisibility">
                         <graphic>
                             <SVGPath fx:id="passwordIcon"
-                                     content="M12 4.5C..."
+                                     content="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
                                      scaleX="0.7" scaleY="0.7"/>
                         </graphic>
                     </Button>

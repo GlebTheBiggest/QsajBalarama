@@ -145,3 +145,41 @@
     -fx-text-fill: white;
     -fx-background-radius: 5;
 }
+
+/* Активна кнопка меню */
+.menu-button-active {
+    -fx-background-color: rgba(26, 188, 156, 0.2); /* Прозорий м'ятний */
+    -fx-text-fill: -color-primary;
+    -fx-border-color: -color-primary;
+    -fx-border-width: 0 0 0 4; /* Полоска зліва */
+}
+
+/* ПУНКТ 4: Стилізація DatePicker (прибираємо Windows 7 стиль) */
+.date-picker .arrow-button {
+    -fx-background-color: transparent;
+}
+.date-picker .arrow-button .arrow {
+    -fx-background-color: -color-text-muted;
+}
+.date-picker-popup {
+    -fx-background-color: white;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);
+}
+.date-picker-popup .month-year-pane {
+    -fx-background-color: -color-primary;
+}
+.date-picker-popup .month-year-pane .label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+.date-picker-popup .day-cell:hover {
+    -fx-background-color: #E8F6F3;
+}
+.date-picker-popup .selected {
+    -fx-background-color: -color-primary;
+    -fx-text-fill: white;
+}
+.date-picker-popup .today {
+    -fx-border-color: -color-primary;
+    -fx-font-weight: bold;
+}

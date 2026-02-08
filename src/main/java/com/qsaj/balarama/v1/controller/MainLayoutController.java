@@ -1,93 +1,98 @@
 package com.qsaj.balarama.v1.controller;
 
 import com.google.inject.Inject;
-import com.google.inject.Injector;
-import javafx.event.ActionEvent;
+import com.qsaj.balarama.v1.service.NavigationService;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
-import javafx.stage.Stage;
 
-import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainLayoutController {
+    @FXML private BorderPane rootPane;
+    @FXML private BorderPane contentPane;
+    @FXML private Button btnDashboard;
+    @FXML private Button btnTransactions;
+    @FXML private Button btnSavings;
+    @FXML private Button btnAnalytics;
+    @FXML private Button btnProfile;
 
-    @FXML
-    private BorderPane rootPane;
-
-    private final Injector injector;
+    private final NavigationService navigationService;
+    private final Map<Button, String> viewMapping;
+    private Button activeButton;
 
     @Inject
-    public MainLayoutController(Injector injector) {
-        this.injector = injector;
+    public MainLayoutController(NavigationService navigationService) {
+        this.navigationService = navigationService;
+        this.viewMapping = new HashMap<>();
     }
 
     @FXML
     public void initialize() {
+        initializeViewMapping();
         showDashboard();
     }
 
-    // --- МЕТОДИ НАВІГАЦІЇ ---
+    private void initializeViewMapping() {
+        viewMapping.put(btnDashboard, "/fxml/dashboard.fxml");
+        viewMapping.put(btnTransactions, "/fxml/transactions.fxml");
+        viewMapping.put(btnSavings, "/fxml/savings.fxml");
+        viewMapping.put(btnProfile, "/fxml/profile.fxml");
+    }
+
+    private void setActive(Button button) {
+        if (activeButton != null) {
+            activeButton.getStyleClass().remove("menu-button-active");
+        }
+        if (button != null) {
+            button.getStyleClass().add("menu-button-active");
+            activeButton = button;
+        }
+    }
+
+    private void navigateToView(Button button) {
+        String fxmlPath = viewMapping.get(button);
+        if (fxmlPath == null) return;
+
+        try {
+            Node view = navigationService.loadView(fxmlPath);
+            contentPane.setCenter(view);
+            setActive(button);
+        } catch (Exception e) {
+            navigationService.showAlert("Navigation Error", "Could not load view: " + fxmlPath);
+        }
+    }
 
     @FXML
     private void showDashboard() {
-        loadView("/fxml/dashboard.fxml");
+        navigateToView(btnDashboard);
     }
 
     @FXML
     private void showTransactions() {
-        loadView("/fxml/transactions.fxml");
-    }
-
-    @FXML
-    private void showAnalytics() {
-        // Поки що заглушка, або можна видалити, якщо замінив на Savings
-        System.out.println("Navigate to Analytics");
+        navigateToView(btnTransactions);
     }
 
     @FXML
     private void showSavingsGoals() {
-        loadView("/fxml/savings.fxml");
+        navigateToView(btnSavings);
+    }
+
+    @FXML
+    private void showAnalytics() {
+        navigationService.showAlert("Info", "Analytics feature coming soon.");
+        setActive(btnAnalytics);
     }
 
     @FXML
     private void showProfile() {
-        loadView("/fxml/profile.fxml");
+        navigateToView(btnProfile);
     }
 
     @FXML
-    private void handleLogout(ActionEvent event) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
-            loader.setControllerFactory(injector::getInstance);
-            Parent loginRoot = loader.load();
-
-            Stage stage = (Stage) rootPane.getScene().getWindow();
-
-            // ВИПРАВЛЕНО: Розмір вікна при виході (1280x800)
-            stage.setScene(new Scene(loginRoot, 1280, 800));
-            stage.setTitle("Qsaj Balarama - Login");
-            stage.centerOnScreen();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    // --- ДОПОМІЖНИЙ МЕТОД ---
-
-    private void loadView(String fxmlPath) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
-            loader.setControllerFactory(injector::getInstance);
-            Node view = loader.load();
-            rootPane.setCenter(view);
-        } catch (IOException e) {
-            System.err.println("Could not load view: " + fxmlPath);
-            e.printStackTrace();
-        }
+    private void handleLogout() {
+        navigationService.navigateTo("/fxml/login.fxml", "Qsaj Balarama - Login", false);
     }
 }

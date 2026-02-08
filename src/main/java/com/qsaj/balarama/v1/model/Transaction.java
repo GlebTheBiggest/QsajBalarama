@@ -1,7 +1,6 @@
 package com.qsaj.balarama.v1.model;
 
-import com.qsaj.balarama.v1.model.enums.Category;
-import com.qsaj.balarama.v1.model.enums.TransactionType;
+import com.qsaj.balarama.v1.model.enums.*;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,37 +12,45 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @NoArgsConstructor
-@RequiredArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Transaction {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NonNull
     @Column(nullable = false)
     private String title;
 
-    @NonNull
     @Column(nullable = false)
     private BigDecimal amount;
 
-    @NonNull
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TransactionType type;
 
-    @NonNull
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Category category;
 
-    @NonNull
     @Column(nullable = false)
     private LocalDate date;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    @NonNull
     private User user;
+
+    @Column(length = 500)
+    private String notes;
+
+    @Column(name = "due_date")
+    private LocalDate dueDate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TransactionStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Priority priority;
 }

@@ -3,8 +3,7 @@ package com.qsaj.balarama.v1.service.impl;
 import com.google.inject.Inject;
 import com.qsaj.balarama.v1.model.Transaction;
 import com.qsaj.balarama.v1.model.User;
-import com.qsaj.balarama.v1.model.enums.Category;
-import com.qsaj.balarama.v1.model.enums.TransactionType;
+import com.qsaj.balarama.v1.model.enums.*;
 import com.qsaj.balarama.v1.repository.TransactionRepository;
 import com.qsaj.balarama.v1.repository.UserRepository;
 import com.qsaj.balarama.v1.service.FinanceService;
@@ -14,57 +13,64 @@ import java.time.LocalDate;
 import java.util.List;
 
 public class FinanceServiceImpl implements FinanceService {
-
-    private final TransactionRepository transactionRepository;
-    private final UserRepository userRepository;
+    private final TransactionRepository txRepo;
+    private final UserRepository userRepo;
 
     @Inject
-    public FinanceServiceImpl(TransactionRepository transactionRepository, UserRepository userRepository) {
-        this.transactionRepository = transactionRepository;
-        this.userRepository = userRepository;
+    public FinanceServiceImpl(TransactionRepository txRepo, UserRepository userRepo) {
+        this.txRepo = txRepo;
+        this.userRepo = userRepo;
     }
 
     @Override
-    public void addTransaction(User user, String title, BigDecimal amount, TransactionType type, Category category, LocalDate date) {
-        Transaction tx = new Transaction(title, amount, type, category, date, user);
-        transactionRepository.save(tx);
+    public void addTransaction(User user, String title, BigDecimal amount, TransactionType type,
+                               Category category, LocalDate date, String notes,
+                               LocalDate dueDate, TransactionStatus status, Priority priority) {
+        Transaction tx = Transaction.builder()
+                .title(title)
+                .amount(amount)
+                .type(type)
+                .category(category)
+                .date(date)
+                .user(user)
+                .notes(notes)
+                .dueDate(dueDate)
+                .status(status)
+                .priority(priority)
+                .build();
 
-        BigDecimal currentBalance = user.getSavedAmount() != null ? user.getSavedAmount() : BigDecimal.ZERO;
+        txRepo.save(tx);
 
-        if (type == TransactionType.INCOME) {
-            user.setSavedAmount(currentBalance.add(amount));
-        } else {
-            user.setSavedAmount(currentBalance.subtract(amount));
+        if (status == TransactionStatus.COMPLETED) {
+            applyBalance(user, amount, type, false);
         }
-
-        userRepository.update(user);
     }
 
     @Override
     public List<Transaction> getUserTransactions(User user) {
-        return transactionRepository.findAllByUser(user);
+        return txRepo.findAllByUser(user);
     }
 
     @Override
     public void deleteTransaction(Long id, User user) {
-        // 1. Знаходимо транзакцію, щоб знати суму і тип
-        Transaction t = transactionRepository.findById(id); // Тобі треба додати findById в репозиторій!
+        Transaction tx = txRepo.findById(id);
+        if (tx == null) return;
 
-        if (t != null) {
-            // 2. Відкочуємо баланс
-            BigDecimal currentBalance = user.getSavedAmount();
-
-            if (t.getType() == TransactionType.INCOME) {
-                // Якщо видаляємо дохід, то віднімаємо гроші у юзера
-                user.setSavedAmount(currentBalance.subtract(t.getAmount()));
-            } else {
-                // Якщо видаляємо витрату, то повертаємо гроші юзеру
-                user.setSavedAmount(currentBalance.add(t.getAmount()));
-            }
-
-            // 3. Оновлюємо юзера і видаляємо транзакцію
-            userRepository.update(user);
-            transactionRepository.delete(id);
+        if (tx.getStatus() == TransactionStatus.COMPLETED) {
+            applyBalance(user, tx.getAmount(), tx.getType(), true);
         }
+
+        txRepo.delete(id);
+    }
+
+    private void applyBalance(User user, BigDecimal amount, TransactionType type, boolean reverse) {
+        BigDecimal balance = user.getSavedAmount() != null ? user.getSavedAmount() : BigDecimal.ZERO;
+
+        BigDecimal result = (type == TransactionType.INCOME)
+                ? (reverse ? balance.subtract(amount) : balance.add(amount))
+                : (reverse ? balance.add(amount) : balance.subtract(amount));
+
+        user.setSavedAmount(result);
+        userRepo.update(user);
     }
 }

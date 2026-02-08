@@ -90,3 +90,71 @@
     -fx-effect: dropshadow(one-pass-box, rgba(0,0,0,0.1), 0, 1, 0, 0);
     -fx-padding: 0 0 10 0;
 }
+
+/* ===== CALENDAR ===== */
+
+.calendar-cell {
+    -fx-pref-width: 35;
+    -fx-pref-height: 35;
+    -fx-background-color: white;
+    -fx-border-color: #ecf0f1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+}
+
+.calendar-cell-today {
+    -fx-border-color: -color-primary;
+    -fx-border-width: 2;
+}
+
+.calendar-cell-pending {
+    -fx-background-color: #FFF3E0;
+}
+
+.calendar-cell-completed {
+    -fx-background-color: #E8F6F3;
+}
+
+.calendar-day-label {
+    -fx-text-fill: #2c3e50;
+}
+
+.calendar-day-pending {
+    -fx-text-fill: #e67e22;
+    -fx-font-weight: bold;
+}
+
+.calendar-day-completed {
+    -fx-text-fill: #27ae60;
+    -fx-font-weight: bold;
+}
+
+/* ===== POPUP ===== */
+
+.calendar-popup {
+    -fx-background-color: white;
+    -fx-padding: 10;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-border-color: #bdc3c7;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 5, 0, 0, 2);
+}
+
+.calendar-popup-header {
+    -fx-font-weight: bold;
+    -fx-underline: true;
+}
+
+.popup-income {
+    -fx-text-fill: #27ae60;
+}
+
+.popup-expense {
+    -fx-text-fill: #e74c3c;
+}
+
+.popup-pending {
+    -fx-text-fill: #e67e22;
+    -fx-font-weight: bold;
+}

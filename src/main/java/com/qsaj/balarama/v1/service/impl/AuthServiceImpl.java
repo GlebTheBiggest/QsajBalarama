@@ -5,12 +5,10 @@ import com.qsaj.balarama.v1.model.User;
 import com.qsaj.balarama.v1.model.enums.Currency;
 import com.qsaj.balarama.v1.repository.UserRepository;
 import com.qsaj.balarama.v1.service.AuthService;
+import com.qsaj.balarama.v1.util.ValidationUtil;
 import org.mindrot.jbcrypt.BCrypt;
 
-import java.util.Optional;
-
 public class AuthServiceImpl implements AuthService {
-
     private final UserRepository userRepository;
 
     @Inject
@@ -18,36 +16,31 @@ public class AuthServiceImpl implements AuthService {
         this.userRepository = userRepository;
     }
 
-    private static final String EMAIL_PATTERN = "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$";
-
     @Override
     public void register(String username, String email, String password) {
-        if (!email.matches(EMAIL_PATTERN)) {
-            throw new IllegalArgumentException("Invalid email format (e.g. user@mail.com)");
-        }
+        ValidationUtil.validateEmail(email);
+
         if (userRepository.findByUsername(username).isPresent()) {
             throw new IllegalArgumentException("Username is already taken!");
         }
         if (userRepository.findByEmail(email).isPresent()) {
             throw new IllegalArgumentException("Email is already registered!");
         }
+
         String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
-        User user = new User(username, hashedPassword, email);
+        User user = User.builder()
+                .username(username)
+                .password(hashedPassword)
+                .email(email)
+                .build();
         userRepository.save(user);
     }
 
     @Override
     public User authenticate(String username, String password) {
-        Optional<User> userOpt = userRepository.findByUsername(username);
-        if (userOpt.isEmpty()) {
-            return null;
-        }
-        User user = userOpt.get();
-        if (BCrypt.checkpw(password, user.getPassword())) {
-            return user;
-        } else {
-            return null;
-        }
+        return userRepository.findByUsername(username)
+                .filter(user -> BCrypt.checkpw(password, user.getPassword()))
+                .orElse(null);
     }
 
     @Override
@@ -67,13 +60,20 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void updateProfile(User user, String newUsername, String newEmail) {
-        // Якщо юзернейм змінився, перевіряємо чи він вільний
-        if (!user.getUsername().equals(newUsername) && userRepository.findByUsername(newUsername).isPresent()) {
-            throw new IllegalArgumentException("Username already taken.");
+        ValidationUtil.validateEmail(newEmail);
+
+        if (!user.getUsername().equals(newUsername)) {
+            userRepository.findByUsername(newUsername)
+                    .ifPresent(existing -> {
+                        throw new IllegalArgumentException("Username already taken.");
+                    });
         }
-        // Якщо пошта змінилася, перевіряємо чи вона вільна
-        if (!user.getEmail().equals(newEmail) && userRepository.findByEmail(newEmail).isPresent()) {
-            throw new IllegalArgumentException("Email already taken.");
+
+        if (!user.getEmail().equals(newEmail)) {
+            userRepository.findByEmail(newEmail)
+                    .ifPresent(existing -> {
+                        throw new IllegalArgumentException("Email already taken.");
+                    });
         }
 
         user.setUsername(newUsername);

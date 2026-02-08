@@ -3,14 +3,15 @@ package com.qsaj.balarama.v1.controller;
 import com.google.inject.Inject;
 import com.qsaj.balarama.v1.model.Transaction;
 import com.qsaj.balarama.v1.model.User;
-import com.qsaj.balarama.v1.model.enums.Category;
-import com.qsaj.balarama.v1.model.enums.Currency;
-import com.qsaj.balarama.v1.model.enums.TransactionType;
+import com.qsaj.balarama.v1.model.enums.*;
 import com.qsaj.balarama.v1.service.FinanceService;
+import com.qsaj.balarama.v1.service.NavigationService;
 import com.qsaj.balarama.v1.session.UserSession;
+import com.qsaj.balarama.v1.util.*;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 
@@ -18,7 +19,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class TransactionsController {
 
@@ -26,169 +26,165 @@ public class TransactionsController {
     @FXML private TextField amountField;
     @FXML private ComboBox<TransactionType> typeBox;
     @FXML private ComboBox<Category> categoryBox;
+    @FXML private ComboBox<TransactionStatus> statusBox;
+    @FXML private ComboBox<Priority> priorityBox;
     @FXML private DatePicker datePicker;
+    @FXML private DatePicker dueDatePicker;
+    @FXML private TextArea notesArea;
 
-    // Statistics Labels
     @FXML private Label totalBalanceLabel;
     @FXML private Label totalIncomeLabel;
     @FXML private Label totalExpenseLabel;
+
+    @FXML private DatePicker filterStartDate;
+    @FXML private DatePicker filterEndDate;
+    @FXML private ComboBox<TransactionStatus> filterStatus;
+    @FXML private ComboBox<Category> filterCategory;
+    @FXML private TextField filterMinAmount;
+    @FXML private TextField filterMaxAmount;
+    @FXML private TextField searchField;
 
     @FXML private TableView<Transaction> transactionsTable;
     @FXML private TableColumn<Transaction, LocalDate> colDate;
     @FXML private TableColumn<Transaction, String> colTitle;
     @FXML private TableColumn<Transaction, String> colCategory;
-    @FXML private TableColumn<Transaction, String> colType;
+    @FXML private TableColumn<Transaction, String> colStatus;
+    @FXML private TableColumn<Transaction, LocalDate> colDueDate;
+    @FXML private TableColumn<Transaction, String> colNotes;
     @FXML private TableColumn<Transaction, BigDecimal> colAmount;
     @FXML private TableColumn<Transaction, Void> colAction;
 
     private final UserSession userSession;
     private final FinanceService financeService;
+    private final NavigationService navigationService;
+
+    private final ObservableList<Transaction> masterData = FXCollections.observableArrayList();
+    private final TransactionFilter transactionFilter;
 
     @Inject
-    public TransactionsController(UserSession userSession, FinanceService financeService) {
+    public TransactionsController(UserSession userSession, FinanceService financeService, NavigationService navigationService) {
         this.userSession = userSession;
         this.financeService = financeService;
+        this.navigationService = navigationService;
+        this.transactionFilter = new TransactionFilter();
     }
 
     @FXML
     public void initialize() {
         setupTableColumns();
-
-        // 1. Configure Type and Categories
-        typeBox.getItems().setAll(TransactionType.values());
-
-        // Listener: When Type changes -> Filter Categories
-        typeBox.valueProperty().addListener((obs, oldType, newType) -> {
-            if (newType != null) {
-                List<Category> filteredCategories = Arrays.stream(Category.values())
-                        .filter(cat -> cat.getType() == newType)
-                        .collect(Collectors.toList());
-                categoryBox.getItems().setAll(filteredCategories);
-                categoryBox.getSelectionModel().selectFirst();
-            }
-        });
-
-        // Default values
-        datePicker.setValue(LocalDate.now());
-        typeBox.setValue(TransactionType.EXPENSE); // Triggers listener to populate categories
-
+        initializeComboBoxes();
+        setupTypeChangeListener();
+        setupFilterListeners();
         loadData();
     }
 
     private void setupTableColumns() {
-        Currency userCurrency = getUserCurrency();
-        String symbol = userCurrency.getSymbol();
-
         colDate.setCellValueFactory(data -> new SimpleObjectProperty<>(data.getValue().getDate()));
+
         colTitle.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getTitle()));
+        colTitle.setCellFactory(column -> new TransactionTitleCell());
+
         colCategory.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getCategory().name()));
-        colType.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getType().name()));
 
-        // Sorting Fix: Use the raw number (BigDecimal)
+        colStatus.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getStatus().name()));
+        colStatus.setCellFactory(column -> new StatusTableCell());
+
+        colDueDate.setCellValueFactory(data -> new SimpleObjectProperty<>(data.getValue().getDueDate()));
+
+        colNotes.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getNotes()));
+        colNotes.setCellFactory(column -> new NotesTableCell());
+
         colAmount.setCellValueFactory(data -> new SimpleObjectProperty<>(data.getValue().getAmount()));
+        colAmount.setCellFactory(column -> new AmountTableCell());
 
-        // Visual Formatting: Add colors and symbols
-        colAmount.setCellFactory(column -> new TableCell<Transaction, BigDecimal>() {
-            @Override
-            protected void updateItem(BigDecimal amount, boolean empty) {
-                super.updateItem(amount, empty);
+        colAction.setCellFactory(column -> new ActionTableCell(this::handleDeleteTransaction));
+    }
 
-                if (empty || amount == null) {
-                    setText(null);
-                    setStyle("");
+    private void initializeComboBoxes() {
+        typeBox.getItems().setAll(TransactionType.values());
+        statusBox.getItems().setAll(TransactionStatus.values());
+        priorityBox.getItems().setAll(Priority.values());
+        filterStatus.getItems().setAll(TransactionStatus.values());
+        filterCategory.getItems().setAll(Category.values());
+    }
+
+    private void setupTypeChangeListener() {
+        typeBox.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                List<Category> filteredCategories = Arrays.stream(Category.values())
+                        .filter(cat -> cat.getType() == newVal)
+                        .toList();
+                categoryBox.getItems().setAll(filteredCategories);
+                categoryBox.getSelectionModel().selectFirst();
+
+                if (newVal == TransactionType.INCOME) {
+                    dueDatePicker.setValue(null);
+                    dueDatePicker.setDisable(true);
                 } else {
-                    // Get the transaction to check if it's Income or Expense
-                    Transaction t = getTableView().getItems().get(getIndex());
-
-                    String prefix = (t.getType() == TransactionType.INCOME) ? "+ " : "- ";
-                    setText(prefix + symbol + " " + amount);
-
-                    if (t.getType() == TransactionType.INCOME) {
-                        setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold; -fx-alignment: CENTER-RIGHT;");
-                    } else {
-                        setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold; -fx-alignment: CENTER-RIGHT;");
-                    }
-                }
-            }
-        });
-
-        // --- ЛОГІКА КНОПКИ ВИДАЛЕННЯ ---
-        colAction.setCellFactory(param -> new TableCell<Transaction, Void>() {
-            private final Button deleteBtn = new Button("X");
-
-            {
-                // Стилі кнопки (червона, маленька)
-                deleteBtn.setStyle("-fx-background-color: #ffebee; -fx-text-fill: #c62828; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5;");
-                deleteBtn.setOnAction(event -> {
-                    Transaction t = getTableView().getItems().get(getIndex());
-                    handleDeleteTransaction(t);
-                });
-            }
-
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty) {
-                    setGraphic(null);
-                } else {
-                    setGraphic(deleteBtn);
+                    dueDatePicker.setDisable(false);
                 }
             }
         });
     }
 
-    private void handleDeleteTransaction(Transaction t) {
-        // Питаємо підтвердження
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Delete Transaction");
-        alert.setHeaderText("Are you sure?");
-        alert.setContentText("This will affect your balance: " + t.getTitle() + " (" + t.getAmount() + ")");
-
-        if (alert.showAndWait().get() == ButtonType.OK) {
-            try {
-                User user = userSession.getCurrentUser();
-                financeService.deleteTransaction(t.getId(), user);
-                loadData();
-            } catch (Exception e) {
-                e.printStackTrace();
-                showAlert("Error deleting transaction");
-            }
-        }
+    private void setupFilterListeners() {
+        filterStartDate.valueProperty().addListener(o -> applyFilters());
+        filterEndDate.valueProperty().addListener(o -> applyFilters());
+        filterStatus.valueProperty().addListener(o -> applyFilters());
+        filterCategory.valueProperty().addListener(o -> applyFilters());
+        searchField.textProperty().addListener(o -> applyFilters());
+        filterMinAmount.textProperty().addListener(o -> applyFilters());
+        filterMaxAmount.textProperty().addListener(o -> applyFilters());
     }
 
     private void loadData() {
         User user = userSession.getCurrentUser();
         List<Transaction> list = financeService.getUserTransactions(user);
-        transactionsTable.setItems(FXCollections.observableArrayList(list));
-
-        calculateAndShowStats(list, user);
+        masterData.setAll(list);
+        applyFilters();
     }
 
-    private void calculateAndShowStats(List<Transaction> transactions, User user) {
-        Currency currency = getUserCurrency();
+    private void applyFilters() {
+        transactionFilter.setStartDate(filterStartDate.getValue());
+        transactionFilter.setEndDate(filterEndDate.getValue());
+        transactionFilter.setStatus(filterStatus.getValue());
+        transactionFilter.setCategory(filterCategory.getValue());
+        transactionFilter.setSearchText(searchField.getText());
+        transactionFilter.setMinAmount(parseBigDecimal(filterMinAmount.getText()));
+        transactionFilter.setMaxAmount(parseBigDecimal(filterMaxAmount.getText()));
+
+        List<Transaction> filtered = transactionFilter.filter(masterData);
+        transactionsTable.setItems(FXCollections.observableArrayList(filtered));
+        calculateAndShowStats(filtered);
+    }
+
+    private BigDecimal parseBigDecimal(String text) {
+        try {
+            return text.isEmpty() ? null : new BigDecimal(text);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private void calculateAndShowStats(List<Transaction> transactions) {
+        User user = userSession.getCurrentUser();
+        Currency currency = user.getCurrency() != null ? user.getCurrency() : Currency.USD;
         String symbol = currency.getSymbol();
 
         BigDecimal income = BigDecimal.ZERO;
         BigDecimal expense = BigDecimal.ZERO;
 
         for (Transaction t : transactions) {
-            if (t.getType() == TransactionType.INCOME) {
-                income = income.add(t.getAmount());
-            } else {
-                expense = expense.add(t.getAmount());
+            if (t.getStatus() == TransactionStatus.COMPLETED) {
+                if (t.getType() == TransactionType.INCOME) income = income.add(t.getAmount());
+                else expense = expense.add(t.getAmount());
             }
         }
 
         BigDecimal balance = user.getSavedAmount() != null ? user.getSavedAmount() : BigDecimal.ZERO;
-
-        totalBalanceLabel.setText(symbol + " " + balance.toString());
-        totalIncomeLabel.setText("+ " + symbol + " " + income.toString());
-        totalExpenseLabel.setText("- " + symbol + " " + expense.toString());
-    }
-
-    private Currency getUserCurrency() {
-        User user = userSession.getCurrentUser();
-        return (user.getCurrency() != null) ? user.getCurrency() : Currency.USD;
+        totalBalanceLabel.setText(symbol + " " + balance);
+        totalIncomeLabel.setText("+ " + symbol + " " + income);
+        totalExpenseLabel.setText("- " + symbol + " " + expense);
     }
 
     @FXML
@@ -199,35 +195,55 @@ public class TransactionsController {
             TransactionType type = typeBox.getValue();
             Category cat = categoryBox.getValue();
             LocalDate date = datePicker.getValue();
+            TransactionStatus status = statusBox.getValue();
+            Priority priority = priorityBox.getValue();
+            LocalDate dueDate = dueDatePicker.getValue();
+            String notes = notesArea.getText();
 
             if (title.isEmpty() || amountStr.isEmpty() || type == null || cat == null || date == null) {
-                showAlert("Please fill in all fields");
+                navigationService.showAlert("Error", "Please fill in all required fields");
                 return;
             }
 
             BigDecimal amount = new BigDecimal(amountStr);
             User user = userSession.getCurrentUser();
 
-            financeService.addTransaction(user, title, amount, type, cat, date);
+            financeService.addTransaction(user, title, amount, type, cat, date, notes, dueDate, status, priority);
 
             titleField.clear();
             amountField.clear();
-
+            notesArea.clear();
+            dueDatePicker.setValue(null);
             loadData();
 
         } catch (NumberFormatException e) {
-            showAlert("Invalid amount format");
+            navigationService.showAlert("Error", "Invalid amount format");
         } catch (Exception e) {
-            e.printStackTrace();
-            showAlert("Could not save transaction");
+            navigationService.showAlert("Error", "Error saving transaction");
         }
     }
 
-    private void showAlert(String content) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Error");
-        alert.setHeaderText(null);
-        alert.setContentText(content);
-        alert.showAndWait();
+    private void handleDeleteTransaction(Transaction t) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Delete Transaction");
+        alert.setHeaderText("Delete '" + t.getTitle() + "'?");
+        alert.setContentText("Funds will be restored if transaction was Completed.");
+
+        if (alert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
+            financeService.deleteTransaction(t.getId(), userSession.getCurrentUser());
+            loadData();
+        }
+    }
+
+    @FXML
+    private void handleResetFilter() {
+        filterStartDate.setValue(null);
+        filterEndDate.setValue(null);
+        filterStatus.setValue(null);
+        filterCategory.setValue(null);
+        filterMinAmount.clear();
+        filterMaxAmount.clear();
+        searchField.clear();
+        applyFilters();
     }
 }

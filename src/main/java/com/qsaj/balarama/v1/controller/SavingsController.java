@@ -13,15 +13,19 @@ import javafx.scene.layout.*;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class SavingsController {
 
+    @FXML private TextField searchGoalField; // Поле пошуку
     @FXML private TextField goalNameField;
     @FXML private TextField targetAmountField;
     @FXML private FlowPane goalsContainer;
 
     private final UserSession userSession;
     private final SavingsService savingsService;
+
+    private List<SavingsGoal> allGoals;
 
     @Inject
     public SavingsController(UserSession userSession, SavingsService savingsService) {
@@ -32,16 +36,41 @@ public class SavingsController {
     @FXML
     public void initialize() {
         loadGoals();
+        searchGoalField.textProperty().addListener((obs, oldVal, newVal) -> {
+            filterGoals(newVal);
+        });
     }
 
     private void loadGoals() {
+        User user = userSession.getCurrentUser();
+        allGoals = savingsService.getUserGoals(user);
+        renderGoals(allGoals);
+    }
+
+    private void filterGoals(String query) {
+        if (query == null || query.isEmpty()) {
+            renderGoals(allGoals);
+        } else {
+            List<SavingsGoal> filtered = allGoals.stream()
+                    .filter(g -> g.getName().toLowerCase().contains(query.toLowerCase()))
+                    .collect(Collectors.toList());
+            renderGoals(filtered);
+        }
+    }
+
+    private void renderGoals(List<SavingsGoal> goals) {
         goalsContainer.getChildren().clear();
         User user = userSession.getCurrentUser();
-        List<SavingsGoal> goals = savingsService.getUserGoals(user);
         String symbol = (user.getCurrency() != null) ? user.getCurrency().getSymbol() : "$";
 
-        for (SavingsGoal goal : goals) {
-            goalsContainer.getChildren().add(createGoalCard(goal, symbol));
+        if (goals.isEmpty()) {
+            Label emptyLabel = new Label("No savings goals found.");
+            emptyLabel.setStyle("-fx-text-fill: #95a5a6; -fx-font-size: 14px;");
+            goalsContainer.getChildren().add(emptyLabel);
+        } else {
+            for (SavingsGoal goal : goals) {
+                goalsContainer.getChildren().add(createGoalCard(goal, symbol));
+            }
         }
     }
 
@@ -61,19 +90,23 @@ public class SavingsController {
 
             goalNameField.clear();
             targetAmountField.clear();
-            loadGoals();
+
+            loadGoals(); // Перезавантажуємо список
 
         } catch (NumberFormatException e) {
             showAlert("Error", "Invalid amount format");
         }
     }
 
+    // --- ГЕНЕРАЦІЯ КАРТКИ UI ---
     private VBox createGoalCard(SavingsGoal goal, String symbol) {
-        VBox card = new VBox(10);
-        card.getStyleClass().add("goal-card");
+        VBox card = new VBox(15);
+        card.getStyleClass().add("goal-card"); // CSS клас з savings.css
 
+        // 1. Заголовок і кнопка видалення
         HBox header = new HBox();
         header.setAlignment(Pos.CENTER_LEFT);
+
         Label title = new Label(goal.getName());
         title.getStyleClass().add("goal-title");
 
@@ -81,28 +114,35 @@ public class SavingsController {
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         Button deleteBtn = new Button("X");
+        deleteBtn.getTooltip();
+        deleteBtn.setTooltip(new Tooltip("Delete Goal"));
         deleteBtn.getStyleClass().add("button-delete-icon");
         deleteBtn.setOnAction(e -> handleDeleteGoal(goal));
 
         header.getChildren().addAll(title, spacer, deleteBtn);
 
+        // 2. Текст прогресу
         Label progressText = new Label(symbol + " " + goal.getCurrentAmount() + " / " + symbol + " " + goal.getTargetAmount());
         progressText.getStyleClass().add("goal-progress-text");
 
+        // 3. Прогрес бар
         ProgressBar progressBar = new ProgressBar(goal.getProgress());
         progressBar.setMaxWidth(Double.MAX_VALUE);
+
+        // Колір: Зелений, якщо виконано, Синій - якщо в процесі
         if (goal.getProgress() >= 1.0) {
             progressBar.setStyle("-fx-accent: #27ae60;");
         } else {
             progressBar.setStyle("-fx-accent: #3498db;");
         }
 
+        // 4. Кнопка "Додати кошти"
         Button addFundsBtn = new Button("Add Funds");
         addFundsBtn.setMaxWidth(Double.MAX_VALUE);
         addFundsBtn.getStyleClass().add("button-add-funds");
 
         if (goal.getProgress() >= 1.0) {
-            addFundsBtn.setText("Completed!");
+            addFundsBtn.setText("Goal Reached! 🎉");
             addFundsBtn.setDisable(true);
         } else {
             addFundsBtn.setOnAction(e -> showAddFundsDialog(goal));
