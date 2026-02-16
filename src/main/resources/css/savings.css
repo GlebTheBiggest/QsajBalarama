@@ -1,8 +1,7 @@
-/* Картка */
 .goal-card {
     -fx-background-color: white;
     -fx-background-radius: 12;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.08), 8, 0, 0, 3);
     -fx-padding: 20;
     -fx-min-width: 320px;
     -fx-max-width: 320px;
@@ -24,7 +23,6 @@
     -fx-font-weight: bold;
 }
 
-/* Кнопка Add Funds */
 .button-add-funds {
     -fx-background-color: #E8F6F3;
     -fx-text-fill: -color-primary;
@@ -33,14 +31,14 @@
     -fx-cursor: hand;
     -fx-padding: 8 15;
 }
+
 .button-add-funds:hover {
     -fx-background-color: -color-primary;
     -fx-text-fill: white;
 }
 
-/* --- ВИПРАВЛЕННЯ ШКАЛИ (Windows 7 fix) --- */
 .progress-bar .track {
-    -fx-background-color: #ecf0f1; /* Сірий фон треку */
+    -fx-background-color: #ecf0f1;
     -fx-background-radius: 10;
     -fx-background-insets: 0;
 }
@@ -48,7 +46,22 @@
 .progress-bar .bar {
     -fx-background-radius: 10;
     -fx-background-insets: 0;
-    -fx-padding: 6px; /* Висота бару */
-    /* -fx-accent задається в коді (синій/зелений) */
-    -fx-effect: null; /* Прибираємо відблиски Win7 */
+    -fx-padding: 6px;
+    -fx-effect: null;
+}
+
+/* === Нові класи (винесені з inline) === */
+.search-goal-field {
+    -fx-font-size: 14px;
+    -fx-background-radius: 20;
+    -fx-padding: 8 15;
+}
+
+.goals-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.goals-flow-pane {
+    -fx-padding: 10;
 }

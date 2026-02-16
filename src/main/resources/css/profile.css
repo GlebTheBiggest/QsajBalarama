@@ -1,13 +1,11 @@
-/* Загальний контейнер профілю */
 .profile-main-container {
     -fx-padding: 20;
 }
 
-/* --- КАРТКИ СТАТИСТИКИ (Справа) --- */
 .stat-box {
     -fx-background-color: white;
     -fx-background-radius: 15;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 2);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.05), 5, 0, 0, 2);
     -fx-padding: 15;
     -fx-alignment: CENTER_LEFT;
 }
@@ -27,17 +25,15 @@
 .stat-rank-value {
     -fx-font-size: 20px;
     -fx-font-weight: bold;
-    -fx-text-fill: #f39c12; /* Золотистий колір для рангу */
+    -fx-text-fill: #f39c12;
 }
 
-/* --- ПОЛЯ ВВОДУ --- */
 .input-label {
     -fx-font-size: 11px;
     -fx-font-weight: bold;
     -fx-text-fill: -color-text-muted;
 }
 
-/* Кнопка оновлення (маленька, збоку) */
 .button-update-small {
     -fx-background-color: transparent;
     -fx-border-color: -color-primary;
@@ -47,29 +43,26 @@
     -fx-font-size: 11px;
     -fx-padding: 5 10;
 }
+
 .button-update-small:hover {
     -fx-background-color: -color-primary;
     -fx-text-fill: white;
 }
 
-
-/* Ім'я користувача (Велике і Жирне) */
 .profile-name {
-    -fx-font-size: 32px; /* Значно більший шрифт */
-    -fx-font-weight: 900; /* Extra Bold (дуже жирний) */
-    -fx-text-fill: -color-text-header; /* Темно-синій */
-    -fx-effect: dropshadow(one-pass-box, rgba(0,0,0,0.1), 0, 1, 0, 0); /* Легка тінь для об'єму */
+    -fx-font-size: 32px;
+    -fx-font-weight: 900;
+    -fx-text-fill: -color-text-header;
+    -fx-effect: dropshadow(one-pass-box, rgba(0, 0, 0, 0.1), 0, 1, 0, 0);
 }
 
-/* Пошта (Більша, ніж була, але менша за ім'я) */
 .profile-email-muted {
     -fx-font-size: 16px;
     -fx-font-weight: normal;
-    -fx-text-fill: -color-text-muted; /* Сірий */
+    -fx-text-fill: -color-text-muted;
     -fx-opacity: 0.8;
 }
 
-/* Контейнер аватара (Залиш без змін, просто для контексту) */
 .avatar-container {
     -fx-alignment: CENTER;
     -fx-background-color: -color-primary;
@@ -78,4 +71,29 @@
     -fx-min-height: 120px;
     -fx-max-width: 120px;
     -fx-max-height: 120px;
+}
+
+/* === Нові класи (винесені з inline) === */
+.change-password-header {
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-text-header;
+}
+
+.achievement-icon-box {
+    -fx-background-color: #FFF5E0;
+    -fx-padding: 10;
+    -fx-background-radius: 10;
+}
+
+.achievement-icon-box-green {
+    -fx-background-color: #E8F6F3;
+}
+
+.achievement-icon-box-blue {
+    -fx-background-color: #EBF5FB;
+}
+
+.savings-coming-soon-label {
+    -fx-font-size: 10px;
+    -fx-text-fill: #95a5a6;
 }

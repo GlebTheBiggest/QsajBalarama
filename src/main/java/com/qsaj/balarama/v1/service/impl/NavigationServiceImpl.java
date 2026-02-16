@@ -9,14 +9,17 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import lombok.Setter;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @Singleton
 public class NavigationServiceImpl implements NavigationService {
     private final Injector injector;
+
     @Setter
     private Stage primaryStage;
 
@@ -33,13 +36,19 @@ public class NavigationServiceImpl implements NavigationService {
             Parent root = loader.load();
 
             if (primaryStage == null) {
-                throw new IllegalStateException("Primary stage is not set. Call setPrimaryStage() first.");
+                System.err.println("Critical: PrimaryStage is null");
+                return;
             }
 
-            primaryStage.setScene(new Scene(root));
+            if (primaryStage.getScene() != null) {
+                primaryStage.getScene().setRoot(root);
+            } else {
+                primaryStage.setScene(new Scene(root));
+            }
             primaryStage.setMaximized(maximized);
             primaryStage.setTitle(title);
         } catch (IOException e) {
+            e.printStackTrace();
             showAlert("Navigation Error", "Could not load view: " + fxmlPath);
         }
     }
@@ -52,13 +61,23 @@ public class NavigationServiceImpl implements NavigationService {
             Parent root = loader.load();
 
             if (primaryStage == null) {
-                throw new IllegalStateException("Primary stage is not set. Call setPrimaryStage() first.");
+                System.err.println("Critical: PrimaryStage is null");
+                return;
             }
 
-            primaryStage.setScene(new Scene(root, width, height));
+            if (primaryStage.getScene() != null) {
+                primaryStage.getScene().setRoot(root);
+                primaryStage.setWidth(width);
+                primaryStage.setHeight(height);
+            } else {
+                primaryStage.setScene(new Scene(root, width, height));
+            }
+
             primaryStage.setMaximized(false);
             primaryStage.setTitle(title);
+            primaryStage.centerOnScreen();
         } catch (IOException e) {
+            e.printStackTrace();
             showAlert("Navigation Error", "Could not load view: " + fxmlPath);
         }
     }
@@ -76,6 +95,26 @@ public class NavigationServiceImpl implements NavigationService {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(content);
+
+        // ВАЖЛИВО: initOwner(null) щоб не чіпало розміри головного вікна
+        alert.initOwner(null);
+        alert.initModality(Modality.APPLICATION_MODAL);
+
         alert.showAndWait();
+    }
+
+    @Override
+    public boolean showConfirmation(String title, String header, String content) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.setContentText(content);
+
+        // ВАЖЛИВО: initOwner(null)
+        alert.initOwner(null);
+        alert.initModality(Modality.APPLICATION_MODAL);
+
+        Optional<javafx.scene.control.ButtonType> result = alert.showAndWait();
+        return result.isPresent() && result.get() == javafx.scene.control.ButtonType.OK;
     }
 }

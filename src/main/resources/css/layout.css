@@ -1,56 +1,76 @@
-/* layout.css - Стилі для меню зліва */
-
 .sidebar {
-    -fx-background-color: #ffffff;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 0);
-    -fx-min-width: 250px;
+    -fx-background-color: white;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.05), 10, 0, 0, 0);
+    -fx-padding: 30 20;
 }
 
-/* Робимо обидві частини логотипу однаковими */
-.sidebar-logo-top, .sidebar-logo-bottom {
+/* === Нові стилі для логотипу === */
+.sidebar-logo-top {
     -fx-font-size: 24px;
     -fx-font-weight: bold;
     -fx-text-fill: -color-primary;
-    -fx-effect: none; /* Прибираємо зайві ефекти, якщо були */
 }
-/* Можна трохи посунути нижнє слово, якщо треба, але стиль тепер один */
+
+.sidebar-logo-bottom {
+    -fx-font-size: 20px;
+    -fx-font-weight: 600;
+    -fx-text-fill: -color-text-header;
+}
 
 .sidebar-separator {
-    -fx-padding: 0 20 0 20;
+    -fx-background-color: #ecf0f1;
+    -fx-pref-height: 1;
+    -fx-max-width: Infinity;
 }
 
-/* Кнопки меню */
 .menu-button {
     -fx-background-color: transparent;
-    -fx-text-fill: -color-text-body;
+    -fx-text-fill: -color-text-muted;
     -fx-font-size: 15px;
-    -fx-alignment: CENTER_LEFT;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER-LEFT;
     -fx-padding: 12 20;
-    -fx-background-radius: 8;
     -fx-cursor: hand;
+    -fx-border-color: transparent;
+    -fx-border-width: 0 0 0 4;
 }
 
-.menu-button SVGPath {
-    -fx-fill: -color-text-muted;
-}
-
-/* Ховер ефект */
 .menu-button:hover {
-    -fx-background-color: #F8F9FA;
     -fx-text-fill: -color-primary;
-}
-.menu-button:hover SVGPath {
-    -fx-fill: -color-primary;
+    -fx-background-color: #f8fcfb;
 }
 
-/* Кнопка Logout */
+.menu-button-active {
+    -fx-background-color: rgba(26, 188, 156, 0.1);
+    -fx-text-fill: -color-primary !important;
+    -fx-border-color: -color-primary;
+}
+
+/* === Кнопка логауту (уніфіковано) === */
 .menu-button-logout {
     -fx-background-color: transparent;
-    -fx-text-fill: #e74c3c; /* Червоний */
-    -fx-font-size: 14px;
-    -fx-alignment: CENTER_LEFT;
-    -fx-padding: 12 20;
+    -fx-text-fill: -color-danger;
+    -fx-font-weight: bold;
     -fx-cursor: hand;
+    -fx-alignment: CENTER-LEFT;
+    -fx-padding: 12 20;
+    -fx-border-color: transparent;
+    -fx-border-width: 0 0 0 4;
 }
-.menu-button-logout SVGPath { -fx-fill: #e74c3c; }
-.menu-button-logout:hover { -fx-background-color: #FFF5F5; }
+
+.menu-button-logout:hover {
+    -fx-background-color: #fff5f5;
+    -fx-text-fill: -color-danger;
+}
+
+.user-profile-box {
+    -fx-padding: 20 0 0 0;
+    -fx-border-color: #ecf0f1 transparent transparent transparent;
+    -fx-border-width: 1;
+}
+
+/* === Стиль для центрального ScrollPane === */
+.content-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}

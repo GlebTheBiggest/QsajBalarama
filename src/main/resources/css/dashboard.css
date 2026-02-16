@@ -1,105 +1,111 @@
-/* dashboard.css */
-
-.dashboard-container {
-    -fx-padding: 30;
-}
-
 .page-title {
     -fx-font-size: 28px;
     -fx-font-weight: bold;
     -fx-text-fill: -color-text-header;
 }
+
 .page-subtitle {
     -fx-font-size: 14px;
     -fx-text-fill: -color-text-muted;
 }
 
-/* Картки статистики */
+/* Stat Cards */
 .stat-card {
     -fx-background-color: white;
-    -fx-background-radius: 15;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);
+    -fx-background-radius: 12;
     -fx-padding: 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.05), 10, 0, 0, 5);
+}
+
+.card-blue {
+    -fx-border-color: transparent transparent transparent #3498db;
+    -fx-border-width: 0 0 0 4;
+}
+
+.card-red {
+    -fx-border-color: transparent transparent transparent #e74c3c;
+    -fx-border-width: 0 0 0 4;
+}
+
+.card-green {
+    -fx-border-color: transparent transparent transparent #27ae60;
+    -fx-border-width: 0 0 0 4;
 }
 
 .stat-label {
-    -fx-font-size: 13px;
-    -fx-text-fill: -color-text-muted;
+    -fx-font-size: 12px;
     -fx-font-weight: bold;
+    -fx-text-fill: -color-text-muted;
 }
+
 .stat-value {
     -fx-font-size: 24px;
     -fx-font-weight: bold;
-    -fx-padding: 5 0 0 0;
+    -fx-text-fill: -color-text-header;
 }
 
-/* Кольорові акценти для карток */
-.card-blue  .stat-value { -fx-text-fill: -color-text-header; }
-.card-red   .stat-value { -fx-text-fill: #e74c3c; }
-.card-green .stat-value { -fx-text-fill: -color-primary; }
-
-/* Велика картка контенту */
 .content-card {
     -fx-background-color: white;
-    -fx-background-radius: 15;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);
+    -fx-background-radius: 12;
     -fx-padding: 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.03), 5, 0, 0, 2);
 }
+
 .card-title {
     -fx-font-size: 16px;
     -fx-font-weight: bold;
     -fx-text-fill: -color-text-header;
-    -fx-padding: 0 0 10 0;
 }
 
-/* Кнопки дій */
-.button-action-red {
-    -fx-background-color: #FFF5F5;
-    -fx-text-fill: #e74c3c;
-    -fx-background-radius: 8;
+/* Recent Transactions */
+.recent-tx-row {
+    -fx-background-color: white;
     -fx-padding: 10;
-    -fx-cursor: hand;
-    -fx-font-weight: bold;
-}
-.button-action-red:hover { -fx-background-color: #FFEBEB; }
-
-.button-action-green {
-    -fx-background-color: #E8F6F3;
-    -fx-text-fill: -color-primary;
     -fx-background-radius: 8;
-    -fx-padding: 10;
-    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.05), 2, 0, 0, 1);
+}
+
+.recent-tx-title {
     -fx-font-weight: bold;
-}
-.button-action-green:hover { -fx-background-color: #D1F2EB; }
-
-.budget-bar .track {
-    -fx-background-color: #ecf0f1;
-    -fx-background-radius: 4;
-}
-.budget-bar .bar {
-    -fx-background-radius: 4;
-    /* Колір задається динамічно в контролері через -fx-accent */
-}
-
-/* Велике привітання */
-.welcome-text {
-    -fx-font-size: 36px;
-    -fx-font-weight: 900; /* Extra Bold */
     -fx-text-fill: -color-text-header;
-    -fx-effect: dropshadow(one-pass-box, rgba(0,0,0,0.1), 0, 1, 0, 0);
-    -fx-padding: 0 0 10 0;
 }
 
-/* ===== CALENDAR ===== */
+.recent-tx-meta {
+    -fx-text-fill: #95a5a6;
+    -fx-font-size: 11px;
+}
+
+.recent-tx-income {
+    -fx-text-fill: -color-success;
+    -fx-font-weight: bold;
+}
+
+.recent-tx-expense {
+    -fx-text-fill: -color-danger;
+    -fx-font-weight: bold;
+}
+
+.recent-tx-loading {
+    -fx-text-fill: #95a5a6;
+}
+
+/* Calendar */
+.calendar-month-label {
+    -fx-font-weight: bold;
+    -fx-padding: 0 10;
+    -fx-text-fill: #2c3e50;
+}
+
+.calendar-day-header {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #7f8c8d;
+}
 
 .calendar-cell {
-    -fx-pref-width: 35;
-    -fx-pref-height: 35;
-    -fx-background-color: white;
     -fx-border-color: #ecf0f1;
     -fx-border-radius: 4;
-    -fx-background-radius: 4;
+    -fx-background-color: white;
     -fx-cursor: hand;
 }
 
@@ -116,45 +122,151 @@
     -fx-background-color: #E8F6F3;
 }
 
-.calendar-day-label {
-    -fx-text-fill: #2c3e50;
+.calendar-cell-overdue {
+    -fx-background-color: #FFE5E5;
 }
 
-.calendar-day-pending {
-    -fx-text-fill: #e67e22;
+.calendar-text-default {
+    -fx-text-fill: -color-text-body;
+}
+
+.calendar-text-pending {
+    -fx-text-fill: -color-warning;
     -fx-font-weight: bold;
 }
 
-.calendar-day-completed {
-    -fx-text-fill: #27ae60;
+.calendar-text-completed {
+    -fx-text-fill: -color-success;
     -fx-font-weight: bold;
 }
 
-/* ===== POPUP ===== */
+.calendar-text-overdue {
+    -fx-text-fill: -color-danger;
+    -fx-font-weight: bold;
+}
 
-.calendar-popup {
+/* Popup */
+.calendar-popup-box {
     -fx-background-color: white;
     -fx-padding: 10;
-    -fx-border-radius: 6;
-    -fx-background-radius: 6;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 5, 0, 0, 2);
     -fx-border-color: #bdc3c7;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 5, 0, 0, 2);
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
 }
 
 .calendar-popup-header {
     -fx-font-weight: bold;
     -fx-underline: true;
+    -fx-text-fill: -color-text-header;
+    -fx-padding-bottom: 5px;
 }
 
-.popup-income {
-    -fx-text-fill: #27ae60;
+.calendar-popup-text {
+    -fx-font-size: 12px;
 }
 
-.popup-expense {
-    -fx-text-fill: #e74c3c;
-}
-
-.popup-pending {
-    -fx-text-fill: #e67e22;
+.popup-status-pending {
+    -fx-text-fill: -color-warning !important;
     -fx-font-weight: bold;
+}
+
+.popup-status-completed {
+    -fx-text-fill: -color-success !important;
+    -fx-font-weight: bold;
+}
+
+.popup-status-overdue {
+    -fx-text-fill: -color-danger !important;
+    -fx-font-weight: bold;
+}
+
+/* Insight */
+.insight-light-bulb {
+    -fx-background-color: #FFF5E0;
+    -fx-padding: 8;
+    -fx-background-radius: 50%;
+}
+
+.insight-container {
+    -fx-background-color: #F8F9FA;
+    -fx-padding: 15;
+    -fx-background-radius: 10;
+}
+
+.insight-title {
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-text-header;
+}
+
+.insight-text {
+    -fx-text-fill: -color-text-body;
+    -fx-font-size: 13px;
+}
+
+.budget-percent-label {
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-text-muted;
+}
+
+.insight-ok {
+    -fx-text-fill: -color-success;
+    -fx-font-weight: bold;
+}
+
+.insight-warning {
+    -fx-text-fill: -color-warning;
+    -fx-font-weight: bold;
+}
+
+.insight-danger {
+    -fx-text-fill: -color-danger;
+    -fx-font-weight: bold;
+}
+
+.budget-bar-ok {
+    -fx-accent: -color-success;
+}
+
+.budget-bar-danger {
+    -fx-accent: -color-danger;
+}
+
+/* ===== BAR CHART ===== */
+.expense-chart {
+    -fx-category-gap: 0; /* стовпці максимально широкі */
+    -fx-bar-gap: 0;
+    -fx-padding: 3 8 3 8;
+}
+
+.chart-bar {
+    -fx-background-radius: 4 4 0 0;
+    -fx-background-insets: 0;
+}
+
+/* Приховуємо підписи осі X */
+.expense-chart .axis:bottom .tick-label {
+    -fx-tick-label-visible: false;
+}
+
+.expense-chart .axis:bottom .tick-mark {
+    -fx-stroke: transparent;
+}
+
+/* Легенда */
+.chart-legend-item {
+    -fx-alignment: center-left;
+}
+
+.chart-legend-rect {
+    -fx-min-width: 12;
+    -fx-min-height: 12;
+    -fx-max-width: 12;
+    -fx-max-height: 12;
+    -fx-background-radius: 2;
+}
+
+.chart-legend-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: -color-text-muted;
 }

@@ -32,7 +32,7 @@
         <VBox spacing="2">
             <Label text="Search Goals" styleClass="input-label"/>
             <TextField fx:id="searchGoalField" promptText="Type goal name..." prefWidth="250"
-                       style="-fx-font-size: 14px; -fx-background-radius: 20; -fx-padding: 8 15;"/>
+                       styleClass="search-goal-field"/>
         </VBox>
     </HBox>
 
@@ -45,8 +45,8 @@
         </HBox>
     </VBox>
 
-    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
-        <FlowPane fx:id="goalsContainer" hgap="20" vgap="20" style="-fx-padding: 10;">
+    <ScrollPane fitToWidth="true" styleClass="goals-scroll-pane" VBox.vgrow="ALWAYS">
+        <FlowPane fx:id="goalsContainer" hgap="20" vgap="20" styleClass="goals-flow-pane">
         </FlowPane>
     </ScrollPane>
 </VBox>

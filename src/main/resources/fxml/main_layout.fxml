@@ -23,7 +23,7 @@
 
     <left>
         <VBox spacing="10" styleClass="sidebar">
-            <VBox alignment="CENTER_LEFT" spacing="0">
+            <VBox alignment="CENTER_LEFT">
                 <padding>
                     <Insets bottom="20" left="20" right="20" top="20" />
                 </padding>
@@ -80,10 +80,8 @@
     </left>
 
     <center>
-        <ScrollPane fitToHeight="true" fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;">
-            <content>
-                <BorderPane fx:id="contentPane" />
-            </content>
+        <ScrollPane fitToHeight="true" fitToWidth="true" styleClass="content-scroll">
+            <BorderPane fx:id="contentPane"/>
         </ScrollPane>
     </center>
 

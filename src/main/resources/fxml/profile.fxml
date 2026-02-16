@@ -26,14 +26,14 @@
     <VBox spacing="20" styleClass="content-card" minWidth="450" HBox.hgrow="ALWAYS">
         <Label text="Edit Profile" styleClass="card-title"/>
 
-        <HBox spacing="20" alignment="TOP_LEFT">
+        <HBox spacing="20">
             <StackPane styleClass="avatar-container">
                 <SVGPath
                         content="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
                         scaleX="2.0" scaleY="2.0" fill="white"/>
             </StackPane>
 
-            <VBox alignment="CENTER_LEFT" spacing="0">
+            <VBox alignment="CENTER_LEFT">
                 <Label fx:id="headerUsernameLabel" text="..." styleClass="profile-name"/>
                 <Label fx:id="headerEmailLabel" text="..." styleClass="profile-email-muted"/>
             </VBox>
@@ -70,7 +70,7 @@
         <Separator/>
 
         <VBox spacing="10">
-            <Label text="Change Password" style="-fx-font-weight: bold; -fx-text-fill: -color-text-header;"/>
+            <Label text="Change Password" styleClass="change-password-header"/>
 
             <VBox spacing="5">
                 <Label text="CURRENT PASSWORD" styleClass="input-label"/>
@@ -101,7 +101,7 @@
 
         <VBox styleClass="stat-box">
             <HBox spacing="15" alignment="CENTER_LEFT">
-                <StackPane style="-fx-background-color: #FFF5E0; -fx-padding: 10; -fx-background-radius: 10;">
+                <StackPane styleClass="achievement-icon-box">
                     <SVGPath
                             content="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
                             fill="#f39c12" scaleX="1.2" scaleY="1.2"/>
@@ -115,7 +115,7 @@
 
         <VBox styleClass="stat-box">
             <HBox spacing="15" alignment="CENTER_LEFT">
-                <StackPane style="-fx-background-color: #E8F6F3; -fx-padding: 10; -fx-background-radius: 10;">
+                <StackPane styleClass="achievement-icon-box-green">
                     <SVGPath
                             content="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
                             fill="#1ABC9C" scaleX="1.2" scaleY="1.2"/>
@@ -129,7 +129,7 @@
 
         <VBox styleClass="stat-box">
             <HBox spacing="15" alignment="CENTER_LEFT">
-                <StackPane style="-fx-background-color: #EBF5FB; -fx-padding: 10; -fx-background-radius: 10;">
+                <StackPane styleClass="achievement-icon-box-blue">
                     <SVGPath
                             content="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"
                             fill="#3498db" scaleX="1.2" scaleY="1.2"/>
@@ -137,9 +137,9 @@
                 <VBox spacing="2">
                     <Label text="Savings (Coming Soon)" styleClass="stat-title"/>
                     <Label text="..." styleClass="stat-value"/>
-                    <VBox spacing="0">
-                        <Label text="Month: ..." style="-fx-font-size: 10px; -fx-text-fill: #95a5a6;"/>
-                        <Label text="Year: ..." style="-fx-font-size: 10px; -fx-text-fill: #95a5a6;"/>
+                    <VBox>
+                        <Label text="Month: ..." styleClass="savings-coming-soon-label"/>
+                        <Label text="Year: ..." styleClass="savings-coming-soon-label"/>
                     </VBox>
                 </VBox>
             </HBox>

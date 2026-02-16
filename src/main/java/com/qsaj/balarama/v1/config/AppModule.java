@@ -26,7 +26,8 @@ public class AppModule extends AbstractModule {
         bind(FinanceService.class).to(FinanceServiceImpl.class);
         bind(SavingsGoalRepository.class).to(SavingsGoalRepositoryImpl.class);
         bind(SavingsService.class).to(SavingsServiceImpl.class);
-        bind(NavigationService.class).to(NavigationServiceImpl.class).in(Singleton.class);    }
+        bind(NavigationService.class).to(NavigationServiceImpl.class).in(Singleton.class);
+    }
 
     @Provides
     @Singleton

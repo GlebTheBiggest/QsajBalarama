@@ -41,7 +41,9 @@ public class FinanceServiceImpl implements FinanceService {
 
         txRepo.save(tx);
 
-        if (status == TransactionStatus.COMPLETED) {
+        // ВИПРАВЛЕНО: Баланс оновлюється для БУДЬ-ЯКОГО статусу (Completed, Pending, Overdue).
+        // Якщо запис існує - гроші враховані.
+        if (status != null) {
             applyBalance(user, amount, type, false);
         }
     }
@@ -56,9 +58,8 @@ public class FinanceServiceImpl implements FinanceService {
         Transaction tx = txRepo.findById(id);
         if (tx == null) return;
 
-        if (tx.getStatus() == TransactionStatus.COMPLETED) {
-            applyBalance(user, tx.getAmount(), tx.getType(), true);
-        }
+        // ВИПРАВЛЕНО: При видаленні гроші повертаються незалежно від статусу.
+        applyBalance(user, tx.getAmount(), tx.getType(), true);
 
         txRepo.delete(id);
     }

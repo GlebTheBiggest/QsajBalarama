@@ -24,18 +24,25 @@ public class App extends Application {
     public void init() {
         this.injector = Guice.createInjector(new AppModule());
 
-        EntityManagerFactory emf = injector.getInstance(EntityManagerFactory.class);
-        emf.createEntityManager();
-        System.out.println("Database connected successfully!");
+        // Ініціалізація БД (переконайтеся, що вона працює)
+        try {
+            EntityManagerFactory emf = injector.getInstance(EntityManagerFactory.class);
+            emf.createEntityManager();
+            System.out.println("Database connected successfully!");
+        } catch (Exception e) {
+            System.err.println("Database connection failed: " + e.getMessage());
+        }
     }
 
     @Override
     public void start(Stage stage) throws IOException {
         NavigationService navigationService = injector.getInstance(NavigationService.class);
 
-        if (navigationService instanceof com.qsaj.balarama.v1.service.impl.NavigationServiceImpl) {
-            ((com.qsaj.balarama.v1.service.impl.NavigationServiceImpl) navigationService).setPrimaryStage(stage);
-        }
+        // --- ВИПРАВЛЕННЯ ---
+        // Ми прибрали 'if (instanceof ...)' і кастинг.
+        // Тепер ми викликаємо метод напряму через інтерфейс.
+        navigationService.setPrimaryStage(stage);
+        // -------------------
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
         loader.setControllerFactory(injector::getInstance);
@@ -54,3 +61,7 @@ public class App extends Application {
         launch();
     }
 }
+
+/*
+-я от що подумав, я як юзер можу мати якісь свої специфічні потреби і може варто було б додати мені можливість створити свою категорію? тобто я наприклад байкер і мені щодня треба купувати нові шкарпетки і шолом, я міг би створити категорію для байка і все було б простіше і зручніше, але так як у мене зараз категорія це енум то я не знаю як це зробити і чи варто взагалі. може це просто ускладнення яке не потрібне, чи це було б варто зробити?
+ */

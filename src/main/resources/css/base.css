@@ -7,27 +7,107 @@
     -color-text-muted: #7f8c8d;
     -color-white: #ffffff;
     -color-input-bg: #F1F3F4;
+    -color-danger: #c0392b;
+    -color-success: #27ae60;
+    -color-warning: #e67e22;
 
     -fx-background-color: -color-bg-main;
     -fx-font-family: 'Segoe UI', sans-serif;
 }
 
-.text-field, .password-field {
+/* === Глобальний контейнер для сторінок дашборду === */
+.dashboard-container {
+    -fx-padding: 20;
+    -fx-spacing: 20;
+}
+
+/* === SCROLL PANE BACKGROUND FIX === */
+.scroll-pane, .scroll-pane > .viewport {
+    -fx-background-color: -color-bg-main;
+    -fx-background: -color-bg-main;
+}
+
+/* === Стилізація скролбару === */
+.scroll-bar:vertical, .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0;
+    -fx-padding: 0;
+}
+
+.scroll-bar:vertical .thumb,
+.scroll-bar:horizontal .thumb {
+    -fx-background-color: #b0c4ce;
+    -fx-background-radius: 10;
+}
+
+.scroll-bar:vertical .thumb:hover,
+.scroll-bar:horizontal .thumb:hover {
+    -fx-background-color: -color-primary;
+}
+
+.scroll-bar:vertical .increment-button,
+.scroll-bar:vertical .decrement-button,
+.scroll-bar:horizontal .increment-button,
+.scroll-bar:horizontal .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.scroll-bar:vertical .increment-arrow,
+.scroll-bar:vertical .decrement-arrow,
+.scroll-bar:horizontal .increment-arrow,
+.scroll-bar:horizontal .decrement-arrow {
+    -fx-background-color: transparent;
+    -fx-shape: "";
+}
+
+/* === COMBOBOX === */
+.combo-box {
     -fx-background-color: -color-input-bg;
-    -fx-border-color: transparent;
     -fx-background-radius: 8;
-    -fx-border-radius: 8;
-    -fx-padding: 12 15;
-    -fx-font-size: 15px;
+    -fx-border-color: transparent;
+    -fx-padding: 4 8;
+}
+
+.combo-box:hover {
+    -fx-background-color: white;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.1), 5, 0, 0, 1);
+    -fx-cursor: hand;
+}
+
+.combo-box .list-cell {
     -fx-text-fill: -color-text-body;
+    -fx-padding: 8 10;
+    -fx-background-color: transparent;
 }
 
-.text-field:focused, .password-field:focused {
-    -fx-background-color: -color-white;
-    -fx-border-color: -color-primary;
-    -fx-border-width: 2px;
+.combo-box .arrow-button {
+    -fx-background-color: transparent;
 }
 
+.combo-box .arrow {
+    -fx-background-color: -color-text-muted;
+    -fx-scale-x: 0.9;
+    -fx-scale-y: 0.9;
+}
+
+.combo-box-popup .list-view {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.15), 10, 0, 0, 5);
+}
+
+.combo-box-popup .list-cell:filled:hover {
+    -fx-background-color: -color-bg-main;
+    -fx-text-fill: -color-primary;
+}
+
+.combo-box-popup .list-cell:filled:selected {
+    -fx-background-color: -color-primary;
+    -fx-text-fill: white;
+}
+
+/* === BUTTONS === */
 .button-primary {
     -fx-background-color: -color-primary;
     -fx-text-fill: -color-white;
@@ -43,143 +123,139 @@
     -fx-effect: dropshadow(three-pass-box, rgba(26, 188, 156, 0.4), 10, 0, 0, 3);
 }
 
-.hyperlink {
+.button-reset {
+    -fx-background-color: transparent;
     -fx-text-fill: -color-primary;
-    -fx-border-color: transparent;
-    -fx-underline: false;
-}
-.hyperlink:hover {
-    -fx-underline: true;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-padding: 8 20;
+    -fx-border-color: -color-primary;
+    -fx-border-radius: 8;
+    -fx-border-width: 1.5;
 }
 
-.hyperlink-secondary {
-    -fx-text-fill: -color-text-muted;
-    -fx-font-size: 12px;
-    -fx-border-color: transparent;
-    -fx-underline: false;
-}
-.hyperlink-secondary:hover {
-    -fx-text-fill: -color-primary;
+.button-reset:hover {
+    -fx-background-color: -color-primary;
+    -fx-text-fill: white;
 }
 
+.button-state-edit {
+    -fx-background-color: #f39c12 !important;
+    -fx-text-fill: white !important;
+}
+
+/* === INPUTS === */
+.text-field, .password-field {
+    -fx-background-color: -color-input-bg;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 12 15;
+    -fx-font-size: 15px;
+    -fx-text-fill: -color-text-body;
+}
+
+.text-field:focused, .password-field:focused {
+    -fx-background-color: -color-white;
+    -fx-border-color: -color-primary;
+    -fx-border-width: 2px;
+}
+
+.field-error {
+    -fx-border-color: -color-danger !important;
+    -fx-border-width: 2px !important;
+    -fx-background-color: #fff5f5 !important;
+}
+
+/* === DATE PICKER === */
+.date-picker {
+    -fx-background-color: -color-input-bg;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: transparent;
+}
+
+.date-picker > .text-field {
+    -fx-background-color: transparent;
+    -fx-padding: 12 35 12 15;
+    -fx-font-size: 14px;
+    -fx-text-fill: -color-text-body;
+}
+
+.date-picker > .arrow-button {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+    -fx-padding: 0 10 0 10;
+}
+
+.date-picker > .arrow-button > .arrow {
+    -fx-background-color: -color-primary;
+    -fx-shape: "M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zm-7 5h5v5h-5v-5z";
+    -fx-scale-x: 1.2;
+    -fx-scale-y: 1.2;
+}
+
+.date-picker > .arrow-button:hover > .arrow {
+    -fx-background-color: -color-primary-dark;
+}
+
+/* === ICONS & LABELS === */
 .icon-button {
     -fx-background-color: transparent;
     -fx-cursor: hand;
-    -fx-padding: 0 10 0 0;
 }
+
 .icon-button SVGPath {
     -fx-fill: #A0A0A0;
 }
+
 .icon-button:hover SVGPath {
     -fx-fill: -color-primary;
 }
 
-/* --- СТИЛІЗАЦІЯ COMBOBOX (Випадаюче меню) --- */
-
-.combo-box {
-    -fx-background-color: -color-input-bg; /* Такий самий фон, як у полів вводу (#F1F3F4) */
-    -fx-background-radius: 8;
-    -fx-border-color: transparent;
-    -fx-border-radius: 8;
-    -fx-padding: 2 5; /* Трохи підкоригуємо відступи */
+.label-weak {
+    -fx-text-fill: -color-danger;
+    -fx-font-size: 10px;
 }
 
-/* При наведенні */
-.combo-box:hover {
-    -fx-background-color: #E8F6F3; /* Світло-м'ятний */
-    -fx-cursor: hand;
+.label-medium {
+    -fx-text-fill: #f39c12;
+    -fx-font-size: 10px;
 }
 
-/* Текст всередині закритого бокса */
-.combo-box .list-cell {
-    -fx-text-fill: -color-text-body;
-    -fx-padding: 8 10; /* Відступи тексту */
+.label-strong {
+    -fx-text-fill: -color-success;
+    -fx-font-size: 10px;
 }
 
-/* Кнопка зі стрілкою справа */
-.combo-box .arrow-button {
+.label-default {
+    -fx-text-fill: -color-text-muted;
+    -fx-font-size: 10px;
+}
+
+/* === Глобальні стилі для сторінок === */
+.dashboard-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.dashboard-scroll > .viewport {
     -fx-background-color: transparent;
 }
 
-/* Сама стрілочка (трикутник) */
-.combo-box .arrow {
-    -fx-background-color: -color-text-muted; /* Сірий колір стрілки */
-    -fx-scale-x: 0.8;
-    -fx-scale-y: 0.8;
-}
-
-/* Коли список відкритий - змінюємо колір стрілки */
-.combo-box:showing .arrow {
-    -fx-background-color: -color-primary;
-}
-
-/* --- ВИПАДАЮЧИЙ СПИСОК (POPUP) --- */
-
-/* Контейнер списку */
-.combo-box-popup .list-view {
-    -fx-background-color: white;
-    -fx-background-radius: 8;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 10, 0, 0, 5);
-    -fx-padding: 5;
-}
-
-/* Елементи списку */
-.combo-box-popup .list-cell {
-    -fx-padding: 10 15;
+/* === Бюджетний прогрес бар (dashboard) === */
+.budget-bar {
+    -fx-accent: -color-primary;
     -fx-background-color: transparent;
-    -fx-text-fill: -color-text-body;
-    -fx-font-size: 14px;
+    -fx-pref-height: 12;
 }
 
-/* Елемент при наведенні мишки */
-.combo-box-popup .list-cell:filled:hover {
-    -fx-background-color: -color-input-bg;
-    -fx-text-fill: -color-primary;
-    -fx-background-radius: 5;
-    -fx-cursor: hand;
+.budget-bar .track {
+    -fx-background-color: #ecf0f1;
+    -fx-background-radius: 10;
 }
 
-/* Вибраний елемент */
-.combo-box-popup .list-cell:filled:selected {
-    -fx-background-color: -color-primary;
-    -fx-text-fill: white;
-    -fx-background-radius: 5;
-}
-
-/* Активна кнопка меню */
-.menu-button-active {
-    -fx-background-color: rgba(26, 188, 156, 0.2); /* Прозорий м'ятний */
-    -fx-text-fill: -color-primary;
-    -fx-border-color: -color-primary;
-    -fx-border-width: 0 0 0 4; /* Полоска зліва */
-}
-
-/* ПУНКТ 4: Стилізація DatePicker (прибираємо Windows 7 стиль) */
-.date-picker .arrow-button {
-    -fx-background-color: transparent;
-}
-.date-picker .arrow-button .arrow {
-    -fx-background-color: -color-text-muted;
-}
-.date-picker-popup {
-    -fx-background-color: white;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);
-}
-.date-picker-popup .month-year-pane {
-    -fx-background-color: -color-primary;
-}
-.date-picker-popup .month-year-pane .label {
-    -fx-text-fill: white;
-    -fx-font-weight: bold;
-}
-.date-picker-popup .day-cell:hover {
-    -fx-background-color: #E8F6F3;
-}
-.date-picker-popup .selected {
-    -fx-background-color: -color-primary;
-    -fx-text-fill: white;
-}
-.date-picker-popup .today {
-    -fx-border-color: -color-primary;
-    -fx-font-weight: bold;
+.budget-bar .bar {
+    -fx-background-radius: 10;
+    -fx-padding: 6px;
 }

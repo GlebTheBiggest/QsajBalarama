@@ -25,7 +25,6 @@
 
         <VBox alignment="CENTER" spacing="5">
             <Label text="Qsaj Balarama" styleClass="label-title"/>
-
             <Label fx:id="quoteLabel"
                    text="Loading quote..."
                    styleClass="label-quote"
@@ -34,22 +33,20 @@
 
         <VBox spacing="15">
             <VBox spacing="5">
-                <Label text="USERNAME" style="-fx-font-size: 11px; -fx-text-fill: #7f8c8d; -fx-font-weight: bold;"/>
+                <Label text="USERNAME" styleClass="auth-label"/>
                 <TextField fx:id="usernameField" promptText="Enter your username" />
             </VBox>
 
             <VBox spacing="5">
                 <HBox alignment="CENTER_LEFT" spacing="10">
-                    <Label text="PASSWORD" style="-fx-font-size: 11px; -fx-text-fill: #7f8c8d; -fx-font-weight: bold;"/>
+                    <Label text="PASSWORD" styleClass="auth-label"/>
                     <Region HBox.hgrow="ALWAYS" />
                     <Hyperlink text="Forgot password?" styleClass="hyperlink-secondary" onAction="#handleForgotPassword"/>
                 </HBox>
 
                 <StackPane alignment="CENTER_RIGHT">
                     <PasswordField fx:id="passwordField" promptText="Enter your password" />
-
                     <TextField fx:id="passwordTextField" promptText="Enter your password" visible="false" />
-
                     <Button styleClass="icon-button" onAction="#togglePasswordVisibility">
                         <graphic>
                             <SVGPath fx:id="passwordIcon"
@@ -70,7 +67,7 @@
         <VBox alignment="CENTER" spacing="5">
             <Hyperlink text="Forgot username?" styleClass="hyperlink-secondary" onAction="#handleForgotUsername"/>
             <Hyperlink text="Create new account"
-                       style="-fx-font-size: 13px; -fx-text-fill: #1ABC9C; -fx-border-color: transparent;"
+                       styleClass="hyperlink-secondary"
                        onAction="#handleRegister"/>
         </VBox>
 

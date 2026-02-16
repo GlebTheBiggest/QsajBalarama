@@ -1,8 +1,7 @@
-
 .login-card {
     -fx-background-color: -color-white;
     -fx-background-radius: 20;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 20, 0, 0, 10);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.15), 20, 0, 0, 10);
     -fx-padding: 50 60;
 }
 
@@ -21,10 +20,46 @@
     -fx-wrap-text: true;
 }
 
-.strength-bar-weak .bar { -fx-background-color: #e74c3c; }   /* Червоний */
-.strength-bar-medium .bar { -fx-background-color: #f1c40f; } /* Жовтий */
-.strength-bar-strong .bar { -fx-background-color: #2ecc71; } /* Зелений */
-.strength-bar-empty .bar { -fx-background-color: transparent; }
+/* === Нові класи (винесені з inline) === */
+.auth-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: #7f8c8d;
+    -fx-font-weight: bold;
+}
 
-.progress-bar .track { -fx-background-color: #F1F3F4; -fx-background-radius: 2; }
-.progress-bar .bar { -fx-background-radius: 2; }
+.hyperlink-secondary {
+    -fx-font-size: 13px;
+    -fx-text-fill: -color-primary;
+    -fx-border-color: transparent;
+}
+
+.hyperlink-secondary:hover {
+    -fx-text-fill: -color-primary-dark;
+    -fx-underline: true;
+}
+
+/* Стилі для індикатора сили пароля (залишаються) */
+.strength-bar-weak .bar {
+    -fx-background-color: #e74c3c;
+}
+
+.strength-bar-medium .bar {
+    -fx-background-color: #f1c40f;
+}
+
+.strength-bar-strong .bar {
+    -fx-background-color: #2ecc71;
+}
+
+.strength-bar-empty .bar {
+    -fx-background-color: transparent;
+}
+
+.progress-bar .track {
+    -fx-background-color: #F1F3F4;
+    -fx-background-radius: 2;
+}
+
+.progress-bar .bar {
+    -fx-background-radius: 2;
+}

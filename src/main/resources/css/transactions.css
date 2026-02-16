@@ -1,40 +1,183 @@
-/* transactions.css */
-
 .input-label {
     -fx-font-size: 11px;
     -fx-font-weight: bold;
     -fx-text-fill: -color-text-muted;
 }
 
-/* TABLE VIEW STYLING */
+/* === TABLE VIEW === */
 .table-view {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
 }
 
-.table-view .column-header-background {
-    -fx-background-color: transparent;
-    -fx-border-width: 0 0 1 0;
-    -fx-border-color: #ecf0f1;
+.table-view .column-header,
+.table-view .column-header-background .filler {
+    -fx-background-color: white;
+    -fx-border-color: transparent transparent -color-primary transparent;
+    -fx-border-width: 2px;
+    -fx-padding: 12 5;
 }
 
 .table-view .column-header .label {
-    -fx-text-fill: -color-text-muted;
+    -fx-text-fill: -color-primary;
     -fx-font-weight: bold;
-    -fx-font-size: 12px;
+    -fx-font-size: 13px;
+    -fx-alignment: CENTER-LEFT;
 }
 
 .table-row-cell {
     -fx-background-color: transparent;
     -fx-border-width: 0 0 1 0;
     -fx-border-color: #f5f6fa;
+    -fx-padding: 8 0;
 }
 
 .table-row-cell:odd {
     -fx-background-color: #fafafa;
 }
 
-.table-row-cell:selected {
-    -fx-background-color: #E8F6F3;
-    -fx-text-fill: black;
+.table-row-cell:hover {
+    -fx-background-color: #f0fdfa;
+}
+
+/* === БАЗОВІ КОЛЬОРИ СТАТУСІВ ТА СУМ (з !important) === */
+.amount-income {
+    -fx-text-fill: -color-success !important;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER-RIGHT;
+}
+
+.amount-expense {
+    -fx-text-fill: -color-danger !important;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER-RIGHT;
+}
+
+.status-pending {
+    -fx-text-fill: -color-warning !important;
+    -fx-font-weight: bold;
+}
+
+.status-completed {
+    -fx-text-fill: -color-success !important;
+    -fx-font-weight: bold;
+}
+
+.status-overdue {
+    -fx-text-fill: -color-danger !important;
+    -fx-font-weight: bold;
+}
+
+/* === ФОН ВИДІЛЕНОГО РЯДКА === */
+.table-view:focused .table-row-cell:filled:selected,
+.table-view .table-row-cell:filled:selected {
+    -fx-background-color: #d1f2eb;
+    -fx-table-cell-border-color: transparent;
+}
+
+/* Buttons */
+.button-action-edit {
+    -fx-background-color: #e8f6f3;
+    -fx-text-fill: -color-primary;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-background-radius: 5;
+}
+
+.button-action-delete {
+    -fx-background-color: #ffebee;
+    -fx-text-fill: -color-danger;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-background-radius: 5;
+}
+
+/* TEXT AREA */
+.text-area {
+    -fx-font-size: 14px;
+    -fx-text-fill: -color-text-body;
+    -fx-background-color: -color-input-bg;
+    -fx-background-radius: 8;
+}
+
+.text-area .content {
+    -fx-background-color: -color-input-bg;
+    -fx-background-radius: 8;
+}
+
+.text-area:focused .content {
+    -fx-background-color: white;
+}
+
+.text-area .prompt-text-fill {
+    -fx-fill: #95a5a6;
+    -fx-font-size: 14px;
+}
+
+/* NOTES POPUP */
+.notes-popup-box {
+    -fx-background-color: white;
+    -fx-padding: 15;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 8, 0, 0, 4);
+    -fx-border-color: -color-primary;
+    -fx-border-width: 1;
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+}
+
+.notes-popup-text {
+    -fx-font-size: 14px;
+    -fx-text-fill: -color-text-body;
+    -fx-wrap-text: true;
+    -fx-max-width: 300;
+}
+
+/* Other Labels */
+.total-balance-label {
+    -fx-font-size: 10px;
+    -fx-text-fill: #95a5a6;
+    -fx-font-weight: bold;
+}
+
+.total-balance-value {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-text-header;
+}
+
+.total-income-value {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #27ae60;
+}
+
+.total-expense-value {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #e74c3c;
+}
+
+.filter-section {
+    -fx-background-color: #f8f9fa;
+    -fx-padding: 15;
+    -fx-background-radius: 8;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 8;
+}
+
+.filter-section-header {
+    -fx-font-weight: bold;
+    -fx-text-fill: #7f8c8d;
+}
+
+.date-range-separator {
+    -fx-text-fill: #95a5a6;
+}
+
+.col-amount {
+    -fx-alignment: CENTER-RIGHT;
+}
+
+.col-action {
+    -fx-alignment: CENTER;
 }
