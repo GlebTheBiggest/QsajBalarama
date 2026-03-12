@@ -29,9 +29,10 @@ public class Transaction {
     @Column(nullable = false)
     private TransactionType type;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Category category;
+    // Instead of Category enum, link to a CategoryItem
+    @ManyToOne
+    @JoinColumn(name = "category_item_id", nullable = false)
+    private CategoryItem categoryItem;
 
     @Column(nullable = false)
     private LocalDate date;

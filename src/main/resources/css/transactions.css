@@ -22,14 +22,14 @@
     -fx-text-fill: -color-primary;
     -fx-font-weight: bold;
     -fx-font-size: 13px;
-    -fx-alignment: CENTER-LEFT;
+    -fx-alignment: CENTER; /* Центруємо заголовки колонок */
 }
 
 .table-row-cell {
+    -fx-cell-size: 45px;
     -fx-background-color: transparent;
     -fx-border-width: 0 0 1 0;
     -fx-border-color: #f5f6fa;
-    -fx-padding: 8 0;
 }
 
 .table-row-cell:odd {
@@ -40,17 +40,37 @@
     -fx-background-color: #f0fdfa;
 }
 
-/* === БАЗОВІ КОЛЬОРИ СТАТУСІВ ТА СУМ (з !important) === */
+/* === ВИРІВНЮВАННЯ ВМІСТУ ТАБЛИЦІ ПО ЦЕНТРУ === */
+.table-cell {
+    -fx-alignment: CENTER;
+    -fx-padding: 0 10px; /* Захист від прилипання до країв */
+}
+
+/* === ФІКС ТЕКСТУ ПРИ ВИДІЛЕННІ РЯДКА === */
+.table-view:focused .table-row-cell:filled:selected,
+.table-view .table-row-cell:filled:selected {
+    -fx-background-color: #d1f2eb;
+    -fx-table-cell-border-color: transparent;
+}
+
+.table-row-cell:selected .table-cell {
+    -fx-text-fill: #2c3e50;
+}
+
+.table-view:focused {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+/* === КОЛЬОРИ СТАТУСІВ ТА СУМ (!important захищає від виділення) === */
 .amount-income {
     -fx-text-fill: -color-success !important;
     -fx-font-weight: bold;
-    -fx-alignment: CENTER-RIGHT;
 }
 
 .amount-expense {
     -fx-text-fill: -color-danger !important;
     -fx-font-weight: bold;
-    -fx-alignment: CENTER-RIGHT;
 }
 
 .status-pending {
@@ -66,13 +86,6 @@
 .status-overdue {
     -fx-text-fill: -color-danger !important;
     -fx-font-weight: bold;
-}
-
-/* === ФОН ВИДІЛЕНОГО РЯДКА === */
-.table-view:focused .table-row-cell:filled:selected,
-.table-view .table-row-cell:filled:selected {
-    -fx-background-color: #d1f2eb;
-    -fx-table-cell-border-color: transparent;
 }
 
 /* Buttons */
@@ -133,6 +146,7 @@
 }
 
 /* Other Labels */
+/* Other Labels */
 .total-balance-label {
     -fx-font-size: 10px;
     -fx-text-fill: #95a5a6;
@@ -140,21 +154,21 @@
 }
 
 .total-balance-value {
-    -fx-font-size: 24px;
+    -fx-font-size: 24px; /* Було 24px */
     -fx-font-weight: bold;
     -fx-text-fill: -color-text-header;
 }
 
 .total-income-value {
-    -fx-font-size: 16px;
+    -fx-font-size: 24px; /* Збільшено з 16px до 24px */
     -fx-font-weight: bold;
-    -fx-text-fill: #27ae60;
+    -fx-text-fill: -color-success; /* Використовуємо глобальну змінну для узгодженості */
 }
 
 .total-expense-value {
-    -fx-font-size: 16px;
+    -fx-font-size: 24px; /* Збільшено з 16px до 24px */
     -fx-font-weight: bold;
-    -fx-text-fill: #e74c3c;
+    -fx-text-fill: -color-danger; /* Використовуємо глобальну змінну */
 }
 
 .filter-section {
@@ -172,12 +186,4 @@
 
 .date-range-separator {
     -fx-text-fill: #95a5a6;
-}
-
-.col-amount {
-    -fx-alignment: CENTER-RIGHT;
-}
-
-.col-action {
-    -fx-alignment: CENTER;
 }

@@ -1,0 +1,260 @@
+/* category-settings.css */
+
+/* === ВИСОТА ВСІХ ПОЛІВ ВВОДУ === */
+.text-field,
+.combo-box {
+    -fx-min-height: 45px !important;
+    -fx-pref-height: 45px !important;
+    -fx-max-height: 45px !important;
+    -fx-font-size: 14px;
+}
+
+.text-field {
+    -fx-padding: 0 15;
+    -fx-text-fill: -color-text-body;
+}
+
+/* === СТИЛІ ТАБЛИЦІ === */
+.table-view {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.table-view .column-header,
+.table-view .column-header-background .filler {
+    -fx-background-color: white;
+    -fx-border-color: transparent transparent -color-primary transparent;
+    -fx-border-width: 2px;
+    -fx-padding: 12 5;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: -color-primary;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-alignment: CENTER-LEFT;
+}
+
+.table-row-cell {
+    -fx-cell-size: 45px;
+    -fx-background-color: transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: #f5f6fa;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: #fafafa;
+}
+
+.table-row-cell:hover {
+    -fx-background-color: #f0fdfa;
+}
+
+.table-view:focused .table-row-cell:filled:selected,
+.table-view .table-row-cell:filled:selected {
+    -fx-background-color: #d1f2eb;
+    -fx-table-cell-border-color: transparent;
+}
+
+.table-row-cell:selected .table-cell {
+    -fx-text-fill: #2c3e50;
+}
+
+.amount-income {
+    -fx-text-fill: -color-success !important;
+    -fx-font-weight: bold;
+}
+
+.amount-expense {
+    -fx-text-fill: -color-danger !important;
+    -fx-font-weight: bold;
+}
+
+.table-view:focused {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+/* Кнопки дій у таблиці та списку підкатегорій */
+.button-table-edit,
+.button-table-delete {
+    -fx-font-size: 12px;
+    -fx-padding: 5 10;
+    -fx-background-radius: 5;
+    -fx-cursor: hand;
+}
+
+.button-table-edit {
+    -fx-background-color: #e8f6f3;
+    -fx-text-fill: -color-primary;
+}
+
+.button-table-delete {
+    -fx-background-color: #ffebee;
+    -fx-text-fill: -color-danger;
+}
+
+/* === СПИСОК ПІДКАТЕГОРІЙ === */
+.subcategories-container,
+.subcategories-container > .viewport,
+.subcategories-list {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.subcategories-list {
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.subcategories-list .list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 8 12;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: #f5f6fa;
+    -fx-text-fill: #2c3e50;
+}
+
+.subcategories-list .list-cell:odd:filled {
+    -fx-background-color: #fafafa;
+}
+
+.subcategories-list .list-cell:even:filled {
+    -fx-background-color: white;
+}
+
+.subcategories-list .list-cell:empty {
+    -fx-background-color: transparent !important;
+    -fx-border-color: transparent !important;
+    -fx-border-width: 0 !important;
+    -fx-padding: 0 !important;
+}
+
+.subcategories-list .list-cell:filled:selected,
+.subcategories-list .list-cell:filled:selected:focused {
+    -fx-background-color: #d1f2eb;
+    -fx-text-fill: #2c3e50;
+}
+
+.subcategories-list .list-cell:filled:selected .label,
+.subcategories-list .list-cell:filled:selected:focused .label {
+    -fx-text-fill: #2c3e50;
+}
+
+.subcategories-list .list-cell:filled:hover {
+    -fx-background-color: #f0fdfa;
+}
+
+/* === ВИПРАВЛЕННЯ ТЕКСТУ В COMBOBOX === */
+.combo-box {
+    -fx-text-fill: black;
+}
+.combo-box .list-cell {
+    -fx-text-fill: black;
+}
+.combo-box .list-cell:selected {
+    -fx-text-fill: black;
+}
+
+/* ========================================================= */
+/* === СУЧАСНИЙ COLOR PICKER — ВЕЛИКИЙ КВАДРАТ ІЗ КОЛЬОРОМ === */
+/* ========================================================= */
+
+/* Основа кнопки */
+.color-picker {
+    -fx-background-color: white;
+    -fx-background-radius: 10px;
+    -fx-border-radius: 10px;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1.5px;
+
+    -fx-min-height: 45px;
+    -fx-pref-height: 45px;
+    -fx-max-height: 45px;
+    -fx-min-width: 60px;
+    -fx-pref-width: 60px;
+
+    -fx-padding: 0;
+    -fx-alignment: center;
+    -fx-cursor: hand;
+
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.02), 4, 0, 0, 1);
+    -fx-transition: all 0.2s ease;
+}
+
+.color-picker:hover {
+    -fx-border-color: #b0b0b0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 6, 0, 0, 2);
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+}
+
+.color-picker:focused {
+    -fx-border-color: -color-primary;
+    -fx-border-width: 2px;
+    -fx-effect: dropshadow(gaussian, rgba(26,188,156,0.3), 8, 0, 0, 2);
+}
+
+/* Повністю ховаємо стрілку */
+.color-picker > .arrow-button {
+    -fx-opacity: 0;
+    -fx-padding: 0;
+    -fx-min-width: 0;
+    -fx-pref-width: 0;
+    -fx-max-width: 0;
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+}
+
+.color-picker > .arrow-button > .arrow {
+    -fx-padding: 0;
+    -fx-shape: "";
+}
+
+/* Лейбл — тільки графіка */
+.color-picker > .color-picker-label {
+    -fx-padding: 0;
+    -fx-alignment: center;
+    -fx-content-display: graphic-only;
+}
+
+/* Контейнер для квадрата (picker-color) — робимо його таким самим великим, як і сам квадрат, центрованим */
+.color-picker .color-picker-label .picker-color {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0;
+    -fx-min-width: 38px;          /* трохи більше, ніж квадрат, щоб вмістити рамку */
+    -fx-min-height: 38px;
+    -fx-pref-width: 38px;
+    -fx-pref-height: 38px;
+    -fx-max-width: 38px;
+    -fx-max-height: 38px;
+    -fx-alignment: center;
+}
+
+/* === САМ КВАДРАТ ІЗ КОЛЬОРОМ — великий, округлий, із тінню === */
+.color-picker .color-picker-label .picker-color > .picker-color-rect {
+    -fx-min-width: 34px;           /* майже на всю висоту контейнера */
+    -fx-min-height: 34px;
+    -fx-pref-width: 34px;
+    -fx-pref-height: 34px;
+    -fx-max-width: 34px;
+    -fx-max-height: 34px;
+
+    -fx-background-radius: 9px;    /* більше заокруглення */
+    -fx-border-radius: 9px;
+    -fx-border-color: rgba(0,0,0,0.12);
+    -fx-border-width: 1.5px;
+
+    /* внутрішня тінь робить квадрат «глибшим» */
+    -fx-effect: innershadow(gaussian, rgba(0,0,0,0.15), 4, 0, 0, 1);
+
+    -fx-transition: all 0.2s ease;
+}
+
+/* При наведенні квадрат трохи збільшується */
+.color-picker:hover .picker-color-rect {
+    -fx-scale-x: 1.06;
+    -fx-scale-y: 1.06;
+    -fx-effect: innershadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 1);
+}

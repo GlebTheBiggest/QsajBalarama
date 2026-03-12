@@ -1,6 +1,7 @@
 package com.qsaj.balarama.v1.service.impl;
 
 import com.google.inject.Inject;
+import com.qsaj.balarama.v1.model.CategoryItem;
 import com.qsaj.balarama.v1.model.SavingsGoal;
 import com.qsaj.balarama.v1.model.User;
 import com.qsaj.balarama.v1.model.enums.*;
@@ -17,14 +18,17 @@ public class SavingsServiceImpl implements SavingsService {
     private final SavingsGoalRepository savingsRepository;
     private final UserRepository userRepository;
     private final FinanceService financeService;
+    private final CategoryServiceImpl categoryService;   // added
 
     @Inject
     public SavingsServiceImpl(SavingsGoalRepository savingsRepository,
                               UserRepository userRepository,
-                              FinanceService financeService) {
+                              FinanceService financeService,
+                              CategoryServiceImpl categoryService) {
         this.savingsRepository = savingsRepository;
         this.userRepository = userRepository;
         this.financeService = financeService;
+        this.categoryService = categoryService;
     }
 
     @Override
@@ -52,12 +56,20 @@ public class SavingsServiceImpl implements SavingsService {
         goal.setCurrentAmount(goal.getCurrentAmount().add(amount));
         savingsRepository.update(goal);
 
+        // Find the "Savings Transfer" category item for this user
+        CategoryItem savingsItem = categoryService.findItemByUserAndName(user, "Savings Transfer");
+        if (savingsItem == null) {
+            // fallback: try to find any expense item, but better to create it if missing
+            // For safety, we could create a temporary one, but we assume it exists from registration.
+            throw new IllegalStateException("System category 'Savings Transfer' not found. Please contact support.");
+        }
+
         financeService.addTransaction(
                 user,
                 "Saved for: " + goal.getName(),
                 amount,
                 TransactionType.EXPENSE,
-                Category.OTHER,
+                savingsItem,
                 LocalDate.now(),
                 "Automatic transfer to savings goal",
                 null,

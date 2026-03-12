@@ -16,6 +16,7 @@ public class MainLayoutController {
     @FXML private Button btnDashboard;
     @FXML private Button btnTransactions;
     @FXML private Button btnSavings;
+    @FXML private Button btnCategories;
     @FXML private Button btnAnalytics;
     @FXML private Button btnProfile;
 
@@ -39,6 +40,7 @@ public class MainLayoutController {
         viewMapping.put(btnDashboard, "/fxml/dashboard.fxml");
         viewMapping.put(btnTransactions, "/fxml/transactions.fxml");
         viewMapping.put(btnSavings, "/fxml/savings.fxml");
+        viewMapping.put(btnCategories, "/fxml/category-settings.fxml");
         viewMapping.put(btnProfile, "/fxml/profile.fxml");
     }
 
@@ -55,12 +57,14 @@ public class MainLayoutController {
     private void navigateToView(Button button) {
         String fxmlPath = viewMapping.get(button);
         if (fxmlPath == null) return;
-
+        System.out.println("Loading view: " + fxmlPath); // додати
         try {
             Node view = navigationService.loadView(fxmlPath);
+            System.out.println("View loaded, setting to center"); // додати
             contentPane.setCenter(view);
             setActive(button);
         } catch (Exception e) {
+            e.printStackTrace(); // додати, щоб побачити стек помилки
             navigationService.showAlert("Navigation Error", "Could not load view: " + fxmlPath);
         }
     }
@@ -78,6 +82,12 @@ public class MainLayoutController {
     @FXML
     private void showSavingsGoals() {
         navigateToView(btnSavings);
+    }
+
+    @FXML
+    private void showCategorySettings() {
+
+        navigateToView(btnCategories);
     }
 
     @FXML

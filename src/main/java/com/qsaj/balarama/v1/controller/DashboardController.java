@@ -1,9 +1,11 @@
 package com.qsaj.balarama.v1.controller;
 
 import com.google.inject.Inject;
+import com.qsaj.balarama.v1.model.CategoryGroup;
 import com.qsaj.balarama.v1.model.Transaction;
 import com.qsaj.balarama.v1.model.enums.TransactionStatus;
 import com.qsaj.balarama.v1.model.enums.TransactionType;
+import com.qsaj.balarama.v1.service.impl.CategoryServiceImpl;
 import com.qsaj.balarama.v1.service.FinanceService;
 import com.qsaj.balarama.v1.session.UserSession;
 import javafx.collections.FXCollections;
@@ -16,6 +18,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Popup;
 import javafx.util.Callback;
+import javafx.util.Duration;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -26,56 +29,34 @@ import java.util.stream.Collectors;
 
 public class DashboardController {
 
-    @FXML
-    private Label welcomeLabel;
-    @FXML
-    private Label balanceLabel;
-    @FXML
-    private Label expenseLabel;
-    @FXML
-    private Label incomeLabel;
-    @FXML
-    private BarChart<String, Number> expenseBarChart;
-    @FXML
-    private VBox recentTransactionsContainer;
-    @FXML
-    private GridPane calendarGrid;
-    @FXML
-    private Label calendarMonthLabel;
-    @FXML
-    private ComboBox<TransactionStatus> calendarFilterCombo;
-    @FXML
-    private VBox chartLegendContainer;
-    @FXML
-    private Label insightTitleLabel;
-    @FXML
-    private Label insightTextLabel;
-    @FXML
-    private ProgressBar budgetProgressBar;
-    @FXML
-    private Label budgetPercentLabel;
+    @FXML private Label welcomeLabel;
+    @FXML private Label balanceLabel;
+    @FXML private Label expenseLabel;
+    @FXML private Label incomeLabel;
+    @FXML private BarChart<String, Number> expenseBarChart;
+    @FXML private VBox recentTransactionsContainer;
+    @FXML private GridPane calendarGrid;
+    @FXML private Label calendarMonthLabel;
+    @FXML private ComboBox<TransactionStatus> calendarFilterCombo;
+    @FXML private VBox chartLegendContainer;
+    @FXML private Label insightTitleLabel;
+    @FXML private Label insightTextLabel;
+    @FXML private ProgressBar budgetProgressBar;
+    @FXML private Label budgetPercentLabel;
 
     private final UserSession userSession;
     private final FinanceService financeService;
+    private final CategoryServiceImpl categoryService;
     private YearMonth currentYearMonth;
     private List<Transaction> allTransactions = Collections.emptyList();
     private final Popup calendarPopup = new Popup();
     private TransactionStatus selectedCalendarStatus = null;
 
-    // Палітра з 30 унікальних кольорів
-    private final String[] colors = {
-            "#e74c3c", "#3498db", "#f39c12", "#2ecc71", "#9b59b6",
-            "#1abc9c", "#e67e22", "#34495e", "#f1c40f", "#16a085",
-            "#27ae60", "#2980b9", "#8e44ad", "#2c3e50", "#d35400",
-            "#c0392b", "#bdc3c7", "#7f8c8d", "#95a5a6", "#e74c3c",
-            "#3498db", "#f39c12", "#2ecc71", "#9b59b6", "#1abc9c",
-            "#e67e22", "#34495e", "#f1c40f", "#16a085", "#27ae60"
-    };
-
     @Inject
-    public DashboardController(UserSession userSession, FinanceService financeService) {
+    public DashboardController(UserSession userSession, FinanceService financeService, CategoryServiceImpl categoryService) {
         this.userSession = userSession;
         this.financeService = financeService;
+        this.categoryService = categoryService;
         this.calendarPopup.setAutoHide(true);
     }
 
@@ -83,7 +64,6 @@ public class DashboardController {
     public void initialize() {
         currentYearMonth = YearMonth.now();
         expenseBarChart.getStyleClass().add("expense-chart");
-        // Прибираємо підписи на осі X (вони будуть тільки в легенді)
         expenseBarChart.setAnimated(false);
         CategoryAxis xAxis = (CategoryAxis) expenseBarChart.getXAxis();
         xAxis.setTickLabelsVisible(false);
@@ -125,14 +105,15 @@ public class DashboardController {
 
         BigDecimal income = BigDecimal.ZERO;
         BigDecimal expense = BigDecimal.ZERO;
-        Map<String, BigDecimal> expenseByCategory = new HashMap<>();
+        Map<CategoryGroup, BigDecimal> expenseByGroup = new HashMap<>();
 
         for (Transaction t : allTransactions) {
             if (t.getType() == TransactionType.INCOME) {
                 income = income.add(t.getAmount());
             } else {
                 expense = expense.add(t.getAmount());
-                expenseByCategory.merge(t.getCategory().name(), t.getAmount(), BigDecimal::add);
+                CategoryGroup group = t.getCategoryItem().getGroup();
+                expenseByGroup.merge(group, t.getAmount(), BigDecimal::add);
             }
         }
 
@@ -142,43 +123,50 @@ public class DashboardController {
         incomeLabel.setText("+ " + symbol + " " + income);
         expenseLabel.setText("- " + symbol + " " + expense);
 
-        updateBarChart(expenseByCategory);
+        // Передаємо символ валюти у метод побудови графіка
+        updateBarChart(expenseByGroup, symbol);
         updateRecentTransactions(symbol);
         updateInsight(balance, income, expense);
         populateCalendar();
     }
 
-    private void updateBarChart(Map<String, BigDecimal> data) {
+    private void updateBarChart(Map<CategoryGroup, BigDecimal> data, String symbol) {
         expenseBarChart.getData().clear();
         chartLegendContainer.getChildren().clear();
 
         if (data.isEmpty()) return;
 
-        // Сортуємо категорії за алфавітом для стабільності кольорів
-        List<String> sortedCategories = new ArrayList<>(data.keySet());
-        Collections.sort(sortedCategories);
+        List<Map.Entry<CategoryGroup, BigDecimal>> entries = new ArrayList<>(data.entrySet());
+        entries.sort(Comparator.comparing(e -> e.getKey().getName()));
 
-        // Одна серія для всіх даних
         XYChart.Series<String, Number> series = new XYChart.Series<>();
         series.setName("Expenses");
 
-        int i = 0;
-        for (String category : sortedCategories) {
-            BigDecimal value = data.get(category);
+        for (Map.Entry<CategoryGroup, BigDecimal> entry : entries) {
+            CategoryGroup group = entry.getKey();
+            BigDecimal value = entry.getValue();
 
-            XYChart.Data<String, Number> dataPoint = new XYChart.Data<>(category, value);
+            XYChart.Data<String, Number> dataPoint = new XYChart.Data<>(group.getName(), value);
+            final String color = group.getColor();
 
-            // Встановлюємо колір для цього стовпця
-            final String color = colors[i % colors.length];
             dataPoint.nodeProperty().addListener((obs, oldNode, newNode) -> {
                 if (newNode != null) {
+                    // Встановлюємо колір стовпця
                     newNode.setStyle("-fx-bar-fill: " + color + ";");
+
+                    // --- НОВЕ: Створюємо та додаємо підказку (Tooltip) ---
+                    Tooltip tooltip = new Tooltip(group.getName() + ":\n" + symbol + " " + value);
+                    tooltip.setShowDelay(Duration.ZERO); // Миттєва поява при наведенні
+                    tooltip.getStyleClass().add("chart-tooltip");
+                    Tooltip.install(newNode, tooltip);
+
+                    // Робимо так, щоб курсор ставав "рукою" при наведенні на стовпець
+                    newNode.setCursor(javafx.scene.Cursor.HAND);
                 }
             });
 
             series.getData().add(dataPoint);
 
-            // Легенда
             HBox legendItem = new HBox(8);
             legendItem.setAlignment(Pos.CENTER_LEFT);
             legendItem.getStyleClass().add("chart-legend-item");
@@ -188,13 +176,11 @@ public class DashboardController {
             colorBox.setMaxSize(12, 12);
             colorBox.setStyle("-fx-background-color: " + color + "; -fx-background-radius: 2;");
 
-            Label catLabel = new Label(category);
+            Label catLabel = new Label(group.getName());
             catLabel.getStyleClass().add("chart-legend-label");
 
             legendItem.getChildren().addAll(colorBox, catLabel);
             chartLegendContainer.getChildren().add(legendItem);
-
-            i++;
         }
 
         expenseBarChart.getData().add(series);
@@ -230,7 +216,8 @@ public class DashboardController {
         Label titleLbl = new Label(t.getTitle());
         titleLbl.getStyleClass().add("recent-tx-title");
 
-        Label catLbl = new Label(t.getCategory().name() + " • " + t.getDate().toString());
+        String catInfo = t.getCategoryItem().getGroup().getName() + " → " + t.getCategoryItem().getName() + " • " + t.getDate().toString();
+        Label catLbl = new Label(catInfo);
         catLbl.getStyleClass().add("recent-tx-meta");
 
         metaBox.getChildren().addAll(titleLbl, catLbl);
@@ -387,7 +374,8 @@ public class DashboardController {
                 }
             }
 
-            Label l = new Label(icon + " " + t.getTitle() + ": " + t.getAmount());
+            String cat = t.getCategoryItem().getGroup().getName() + " → " + t.getCategoryItem().getName();
+            Label l = new Label(icon + " " + t.getTitle() + " (" + cat + "): " + t.getAmount());
             l.getStyleClass().addAll("calendar-popup-text", styleClass);
             box.getChildren().add(l);
         }

@@ -234,7 +234,7 @@
 
 /* ===== BAR CHART ===== */
 .expense-chart {
-    -fx-category-gap: 0; /* стовпці максимально широкі */
+    -fx-category-gap: 0;
     -fx-bar-gap: 0;
     -fx-padding: 3 8 3 8;
 }
@@ -244,7 +244,6 @@
     -fx-background-insets: 0;
 }
 
-/* Приховуємо підписи осі X */
 .expense-chart .axis:bottom .tick-label {
     -fx-tick-label-visible: false;
 }
@@ -269,4 +268,18 @@
 .chart-legend-label {
     -fx-font-size: 11px;
     -fx-text-fill: -color-text-muted;
+}
+
+/* === НОВЕ: ПІДКАЗКА (TOOLTIP) ДЛЯ СТОВПЦІВ ГРАФІКА === */
+.chart-tooltip {
+    -fx-background-color: white;
+    -fx-text-fill: -color-text-header;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 8 12;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: -color-primary;
+    -fx-border-width: 1.5;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.15), 5, 0, 0, 2);
 }
