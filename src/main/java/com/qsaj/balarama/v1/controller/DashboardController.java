@@ -1,10 +1,9 @@
 package com.qsaj.balarama.v1.controller;
 
 import com.google.inject.Inject;
-import com.qsaj.balarama.v1.model.CategoryGroup;
-import com.qsaj.balarama.v1.model.Transaction;
-import com.qsaj.balarama.v1.model.enums.TransactionStatus;
-import com.qsaj.balarama.v1.model.enums.TransactionType;
+import com.qsaj.balarama.v1.model.*;
+import com.qsaj.balarama.v1.model.enums.*;
+import com.qsaj.balarama.v1.service.BudgetService;
 import com.qsaj.balarama.v1.service.impl.CategoryServiceImpl;
 import com.qsaj.balarama.v1.service.FinanceService;
 import com.qsaj.balarama.v1.session.UserSession;
@@ -16,6 +15,7 @@ import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.layout.Priority;
 import javafx.stage.Popup;
 import javafx.util.Callback;
 import javafx.util.Duration;
@@ -47,16 +47,19 @@ public class DashboardController {
     private final UserSession userSession;
     private final FinanceService financeService;
     private final CategoryServiceImpl categoryService;
+    private final BudgetService budgetService;
     private YearMonth currentYearMonth;
     private List<Transaction> allTransactions = Collections.emptyList();
     private final Popup calendarPopup = new Popup();
     private TransactionStatus selectedCalendarStatus = null;
 
     @Inject
-    public DashboardController(UserSession userSession, FinanceService financeService, CategoryServiceImpl categoryService) {
+    public DashboardController(UserSession userSession, FinanceService financeService,
+                               CategoryServiceImpl categoryService, BudgetService budgetService) {
         this.userSession = userSession;
         this.financeService = financeService;
         this.categoryService = categoryService;
+        this.budgetService = budgetService;
         this.calendarPopup.setAutoHide(true);
     }
 
@@ -103,17 +106,39 @@ public class DashboardController {
         welcomeLabel.setText("Hi, " + user.getUsername() + "!");
         allTransactions = financeService.getUserTransactions(user);
 
+        // Отримуємо транзакції поточного періоду, якщо він активний
+        List<Transaction> periodTransactions;
+        if (user.getAppMode() == AppMode.PERIODIC) {
+            BudgetPeriod active = budgetService.getActivePeriod(user);
+            if (active != null) {
+                periodTransactions = allTransactions.stream()
+                        .filter(t -> !t.getDate().isBefore(active.getStartDate()) && !t.getDate().isAfter(active.getEndDate()))
+                        .collect(Collectors.toList());
+            } else {
+                periodTransactions = Collections.emptyList();
+            }
+        } else {
+            periodTransactions = allTransactions;
+        }
+
         BigDecimal income = BigDecimal.ZERO;
         BigDecimal expense = BigDecimal.ZERO;
-        Map<CategoryGroup, BigDecimal> expenseByGroup = new HashMap<>();
 
-        for (Transaction t : allTransactions) {
+        Map<String, BigDecimal> expenseByGroup = new HashMap<>();
+        Map<String, String> groupColors = new HashMap<>();
+
+        for (Transaction t : periodTransactions) {
+            if (t.getType() == TransactionType.TRANSFER) continue;
             if (t.getType() == TransactionType.INCOME) {
                 income = income.add(t.getAmount());
             } else {
                 expense = expense.add(t.getAmount());
-                CategoryGroup group = t.getCategoryItem().getGroup();
-                expenseByGroup.merge(group, t.getAmount(), BigDecimal::add);
+
+                String groupName = t.getSnapshotGroupName() != null ? t.getSnapshotGroupName() : "Deleted Group";
+                String color = t.getSnapshotColor() != null ? t.getSnapshotColor() : "#95a5a6";
+
+                expenseByGroup.merge(groupName, t.getAmount(), BigDecimal::add);
+                groupColors.putIfAbsent(groupName, color);
             }
         }
 
@@ -123,44 +148,40 @@ public class DashboardController {
         incomeLabel.setText("+ " + symbol + " " + income);
         expenseLabel.setText("- " + symbol + " " + expense);
 
-        // Передаємо символ валюти у метод побудови графіка
-        updateBarChart(expenseByGroup, symbol);
+        updateBarChart(expenseByGroup, groupColors, symbol);
         updateRecentTransactions(symbol);
         updateInsight(balance, income, expense);
         populateCalendar();
     }
 
-    private void updateBarChart(Map<CategoryGroup, BigDecimal> data, String symbol) {
+    private void updateBarChart(Map<String, BigDecimal> data, Map<String, String> colors, String symbol) {
         expenseBarChart.getData().clear();
         chartLegendContainer.getChildren().clear();
 
         if (data.isEmpty()) return;
 
-        List<Map.Entry<CategoryGroup, BigDecimal>> entries = new ArrayList<>(data.entrySet());
-        entries.sort(Comparator.comparing(e -> e.getKey().getName()));
+        List<Map.Entry<String, BigDecimal>> entries = new ArrayList<>(data.entrySet());
+        entries.sort(Map.Entry.comparingByKey());
 
         XYChart.Series<String, Number> series = new XYChart.Series<>();
         series.setName("Expenses");
 
-        for (Map.Entry<CategoryGroup, BigDecimal> entry : entries) {
-            CategoryGroup group = entry.getKey();
+        for (Map.Entry<String, BigDecimal> entry : entries) {
+            String groupName = entry.getKey();
             BigDecimal value = entry.getValue();
+            String color = colors.get(groupName);
 
-            XYChart.Data<String, Number> dataPoint = new XYChart.Data<>(group.getName(), value);
-            final String color = group.getColor();
+            XYChart.Data<String, Number> dataPoint = new XYChart.Data<>(groupName, value);
 
             dataPoint.nodeProperty().addListener((obs, oldNode, newNode) -> {
                 if (newNode != null) {
-                    // Встановлюємо колір стовпця
                     newNode.setStyle("-fx-bar-fill: " + color + ";");
 
-                    // --- НОВЕ: Створюємо та додаємо підказку (Tooltip) ---
-                    Tooltip tooltip = new Tooltip(group.getName() + ":\n" + symbol + " " + value);
-                    tooltip.setShowDelay(Duration.ZERO); // Миттєва поява при наведенні
+                    Tooltip tooltip = new Tooltip(groupName + ":\n" + symbol + " " + value);
+                    tooltip.setShowDelay(Duration.ZERO);
                     tooltip.getStyleClass().add("chart-tooltip");
                     Tooltip.install(newNode, tooltip);
 
-                    // Робимо так, щоб курсор ставав "рукою" при наведенні на стовпець
                     newNode.setCursor(javafx.scene.Cursor.HAND);
                 }
             });
@@ -176,7 +197,7 @@ public class DashboardController {
             colorBox.setMaxSize(12, 12);
             colorBox.setStyle("-fx-background-color: " + color + "; -fx-background-radius: 2;");
 
-            Label catLabel = new Label(group.getName());
+            Label catLabel = new Label(groupName);
             catLabel.getStyleClass().add("chart-legend-label");
 
             legendItem.getChildren().addAll(colorBox, catLabel);
@@ -189,10 +210,35 @@ public class DashboardController {
     private void updateRecentTransactions(String symbol) {
         recentTransactionsContainer.getChildren().clear();
 
-        List<Transaction> recent = allTransactions.stream()
-                .sorted(Comparator.comparing(Transaction::getId).reversed())
-                .limit(5)
-                .toList();
+        User user = userSession.getCurrentUser();
+        List<Transaction> all = financeService.getUserTransactions(user);
+
+        // Визначаємо діапазон для "нещодавніх"
+        List<Transaction> recent;
+        if (user.getAppMode() == AppMode.PERIODIC) {
+            BudgetPeriod active = budgetService.getActivePeriod(user);
+            if (active != null) {
+                recent = all.stream()
+                        .filter(t -> t.getType() != TransactionType.TRANSFER) // ігноруємо перекази
+                        .filter(t -> !t.getDate().isBefore(active.getStartDate()) && !t.getDate().isAfter(active.getEndDate()))
+                        .sorted(Comparator.comparing(Transaction::getDate).reversed())
+                        .limit(5)
+                        .toList();
+            } else {
+                // Немає активного періоду – показуємо повідомлення
+                Label placeholder = new Label("Start a budget period to see recent activity.");
+                placeholder.getStyleClass().add("recent-tx-loading");
+                recentTransactionsContainer.getChildren().add(placeholder);
+                return;
+            }
+        } else {
+            // Безперервний режим – останні 30 днів або 5 останніх транзакцій
+            recent = all.stream()
+                    .filter(t -> t.getType() != TransactionType.TRANSFER)
+                    .sorted(Comparator.comparing(Transaction::getDate).reversed())
+                    .limit(5)
+                    .toList();
+        }
 
         if (recent.isEmpty()) {
             Label placeholder = new Label("No recent activity.");
@@ -216,7 +262,10 @@ public class DashboardController {
         Label titleLbl = new Label(t.getTitle());
         titleLbl.getStyleClass().add("recent-tx-title");
 
-        String catInfo = t.getCategoryItem().getGroup().getName() + " → " + t.getCategoryItem().getName() + " • " + t.getDate().toString();
+        String groupName = t.getSnapshotGroupName() != null ? t.getSnapshotGroupName() : "Deleted Group";
+        String itemName = t.getSnapshotItemName() != null ? t.getSnapshotItemName() : "Deleted Item";
+        String catInfo = groupName + " → " + itemName + " • " + t.getDate().toString();
+
         Label catLbl = new Label(catInfo);
         catLbl.getStyleClass().add("recent-tx-meta");
 
@@ -374,7 +423,10 @@ public class DashboardController {
                 }
             }
 
-            String cat = t.getCategoryItem().getGroup().getName() + " → " + t.getCategoryItem().getName();
+            String groupName = t.getSnapshotGroupName() != null ? t.getSnapshotGroupName() : "Deleted";
+            String itemName = t.getSnapshotItemName() != null ? t.getSnapshotItemName() : "Deleted";
+            String cat = groupName + " → " + itemName;
+
             Label l = new Label(icon + " " + t.getTitle() + " (" + cat + "): " + t.getAmount());
             l.getStyleClass().addAll("calendar-popup-text", styleClass);
             box.getChildren().add(l);

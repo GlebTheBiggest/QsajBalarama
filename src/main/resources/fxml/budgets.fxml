@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="20" styleClass="dashboard-container"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.qsaj.balarama.v1.controller.BudgetsController">
+
+    <stylesheets>
+        <String fx:value="/css/base.css"/>
+        <String fx:value="/css/dashboard.css"/>
+        <String fx:value="/css/budgets.css"/>
+    </stylesheets>
+
+    <!-- Mode switch -->
+    <HBox alignment="CENTER_LEFT" spacing="15" styleClass="content-card">
+        <Label fx:id="modeLabel" styleClass="card-title" text="Mode: ..."/>
+        <Button fx:id="switchModeBtn" text="Switch Mode" styleClass="button-reset" onAction="#handleSwitchMode"/>
+        <Region HBox.hgrow="ALWAYS"/>
+    </HBox>
+
+    <!-- Period card -->
+    <VBox styleClass="content-card" spacing="15">
+        <HBox alignment="CENTER_LEFT" spacing="15">
+            <Label fx:id="periodInfoLabel" styleClass="card-title" text="No active period"/>
+            <Label fx:id="datesLabel" styleClass="stat-value" text="" visible="false"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="closePeriodBtn" text="Close Period" styleClass="button-danger-outline" onAction="#handleClosePeriod" visible="false" managed="false"/>
+        </HBox>
+
+        <Separator/>
+
+        <!-- Start new period -->
+        <HBox fx:id="newPeriodBox" spacing="15" alignment="CENTER_LEFT" visible="true" managed="true">
+            <DatePicker fx:id="startDatePicker" promptText="Start (DD.MM.YYYY)" prefWidth="200"/>
+            <DatePicker fx:id="endDatePicker" promptText="End (DD.MM.YYYY)" prefWidth="200"/>
+            <Button fx:id="startPeriodBtn" text="Start New Period" styleClass="button-primary" onAction="#handleStartPeriod"/>
+            <Region HBox.hgrow="ALWAYS"/>
+        </HBox>
+    </VBox>
+
+    <!-- Summary cards -->
+    <HBox spacing="20" styleClass="content-card">
+        <VBox spacing="5" HBox.hgrow="ALWAYS">
+            <Label styleClass="stat-label" text="Budgeted"/>
+            <Label fx:id="totalBudgetedLabel" styleClass="stat-value" text="0"/>
+        </VBox>
+        <Separator orientation="VERTICAL"/>
+        <VBox spacing="5" HBox.hgrow="ALWAYS">
+            <Label styleClass="stat-label" text="Spent"/>
+            <Label fx:id="totalSpentLabel" styleClass="stat-value" text="0"/>
+        </VBox>
+        <Separator orientation="VERTICAL"/>
+        <VBox spacing="5" HBox.hgrow="ALWAYS">
+            <Label styleClass="stat-label" text="Remaining"/>
+            <Label fx:id="totalRemainingLabel" styleClass="stat-value" text="0"/>
+        </VBox>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button fx:id="saveBudgetsBtn" text="Save Budgets" styleClass="button-primary" onAction="#handleSaveBudgets"/>
+    </HBox>
+
+    <!-- Envelopes list -->
+    <VBox styleClass="content-card" spacing="15" VBox.vgrow="ALWAYS">
+        <Label text="Category Allocations (Envelopes)" styleClass="card-title"/>
+        <Separator/>
+
+        <ScrollPane fitToWidth="true" styleClass="dashboard-scroll" VBox.vgrow="ALWAYS">
+            <VBox fx:id="budgetsContainer" spacing="15"/>
+        </ScrollPane>
+    </VBox>
+</VBox>

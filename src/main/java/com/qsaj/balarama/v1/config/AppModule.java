@@ -21,18 +21,21 @@ public class AppModule extends AbstractModule {
         bind(FinanceService.class).to(FinanceServiceImpl.class);
         bind(SavingsService.class).to(SavingsServiceImpl.class);
         bind(NavigationService.class).to(NavigationServiceImpl.class).in(Singleton.class);
-
-        // НОВІ: категорії
         bind(CategoryServiceImpl.class).in(Singleton.class);
+
+        // НОВИЙ СЕРВІС БЮДЖЕТУВАННЯ
+        bind(BudgetService.class).to(BudgetServiceImpl.class).in(Singleton.class);
 
         // Репозиторії
         bind(UserRepository.class).to(UserRepositoryImpl.class);
         bind(TransactionRepository.class).to(TransactionRepositoryImpl.class);
         bind(SavingsGoalRepository.class).to(SavingsGoalRepositoryImpl.class);
-
-        // НОВІ: репозиторії категорій
         bind(CategoryGroupRepository.class).to(CategoryGroupRepositoryImpl.class).in(Singleton.class);
         bind(CategoryItemRepository.class).to(CategoryItemRepositoryImpl.class).in(Singleton.class);
+
+        // НОВІ РЕПОЗИТОРІЇ БЮДЖЕТУВАННЯ
+        bind(BudgetPeriodRepository.class).to(BudgetPeriodRepositoryImpl.class).in(Singleton.class);
+        bind(CategoryBudgetRepository.class).to(CategoryBudgetRepositoryImpl.class).in(Singleton.class);
     }
 
     @Provides

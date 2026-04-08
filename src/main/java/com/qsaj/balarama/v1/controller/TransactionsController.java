@@ -3,6 +3,9 @@ package com.qsaj.balarama.v1.controller;
 import com.google.inject.Inject;
 import com.qsaj.balarama.v1.model.*;
 import com.qsaj.balarama.v1.model.enums.*;
+import com.qsaj.balarama.v1.repository.TransactionRepository;
+import com.qsaj.balarama.v1.service.BudgetService;
+import com.qsaj.balarama.v1.service.SavingsService;
 import com.qsaj.balarama.v1.service.impl.CategoryServiceImpl;
 import com.qsaj.balarama.v1.service.FinanceService;
 import com.qsaj.balarama.v1.service.NavigationService;
@@ -14,6 +17,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
 import javafx.util.StringConverter;
 
 import java.math.BigDecimal;
@@ -22,6 +26,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.ResolverStyle;
 import java.util.*;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 
 public class TransactionsController {
 
@@ -44,6 +49,7 @@ public class TransactionsController {
     @FXML private DatePicker filterStartDate;
     @FXML private DatePicker filterEndDate;
     @FXML private ComboBox<TransactionStatus> filterStatus;
+    @FXML private ComboBox<TransactionType> filterType;
     @FXML private ComboBox<CategoryGroup> filterCategory;
     @FXML private ComboBox<CategoryItem> filterSubcategory;
     @FXML private TextField filterMinAmount;
@@ -62,10 +68,15 @@ public class TransactionsController {
     @FXML private TableColumn<Transaction, BigDecimal> colAmount;
     @FXML private TableColumn<Transaction, Void> colAction;
 
+    @FXML private VBox emptyStateOverlay;
+
     private final UserSession userSession;
     private final FinanceService financeService;
     private final NavigationService navigationService;
     private final CategoryServiceImpl categoryService;
+    private final BudgetService budgetService;
+    private final SavingsService savingsService;
+    private final TransactionRepository transactionRepository;
     private final ObservableList<Transaction> masterData = FXCollections.observableArrayList();
     private final TransactionFilter transactionFilter = new TransactionFilter();
     private Transaction transactionToEdit;
@@ -75,11 +86,16 @@ public class TransactionsController {
 
     @Inject
     public TransactionsController(UserSession userSession, FinanceService financeService,
-                                  NavigationService navigationService, CategoryServiceImpl categoryService) {
+                                  NavigationService navigationService, CategoryServiceImpl categoryService,
+                                  BudgetService budgetService, SavingsService savingsService,
+                                  TransactionRepository transactionRepository) {
         this.userSession = userSession;
         this.financeService = financeService;
         this.navigationService = navigationService;
         this.categoryService = categoryService;
+        this.budgetService = budgetService;
+        this.savingsService = savingsService;
+        this.transactionRepository = transactionRepository;
     }
 
     @FXML
@@ -171,6 +187,7 @@ public class TransactionsController {
         filterEndDate.valueProperty().addListener(o -> applyFilters());
 
         filterStatus.valueProperty().addListener(o -> applyFilters());
+        filterType.valueProperty().addListener(o -> applyFilters());
 
         filterCategory.valueProperty().addListener((o, oldV, newV) -> {
             if (newV == null) {
@@ -219,14 +236,49 @@ public class TransactionsController {
             return;
         }
 
+        if (selectedItem.getGroup().getName().equalsIgnoreCase("System")) {
+            navigationService.showAlert("Error", "System category cannot be used for manual transactions.");
+            return;
+        }
+
+        var user = userSession.getCurrentUser();
+
+        if (user.getAppMode() == AppMode.PERIODIC && budgetService.getActivePeriod(user) == null) {
+            navigationService.showAlert("No Active Period",
+                    "Cannot add transaction. Please start a budget period first (Budgets page).");
+            return;
+        }
+
+        if (typeBox.getValue() == TransactionType.INCOME && selectedItem.getGroup().getName().equalsIgnoreCase("Income")) {
+            SavingsGoal goal = savingsService.getUserGoals(user).stream()
+                    .filter(g -> g.getName().equalsIgnoreCase(selectedItem.getName()))
+                    .findFirst().orElse(null);
+
+            if (goal != null) {
+                BigDecimal available = goal.getCurrentAmount();
+                if (transactionToEdit != null && transactionToEdit.getType() == TransactionType.INCOME
+                        && selectedItem.getName().equals(transactionToEdit.getSnapshotItemName())) {
+                    available = available.add(transactionToEdit.getAmount());
+                }
+                if (available.compareTo(amount) < 0) {
+                    String symbol = user.getCurrency() != null ? user.getCurrency().getSymbol() : "$";
+                    navigationService.showAlert("Insufficient Funds",
+                            "Not enough money in envelope '" + goal.getName() + "'.\nAvailable: " + symbol + " " + available);
+                    return;
+                }
+            }
+        }
+
         if (typeBox.getValue() == TransactionType.EXPENSE) {
-            BigDecimal currentBalance = userSession.getCurrentUser().getSavedAmount();
-            if (currentBalance == null) currentBalance = BigDecimal.ZERO;
+            BigDecimal currentBalance = user.getSavedAmount() != null ? user.getSavedAmount() : BigDecimal.ZERO;
+            if (transactionToEdit != null && transactionToEdit.getType() == TransactionType.EXPENSE) {
+                currentBalance = currentBalance.add(transactionToEdit.getAmount());
+            }
             if (currentBalance.subtract(amount).compareTo(BigDecimal.ZERO) < 0) {
                 boolean confirm = navigationService.showConfirmation(
                         "Negative Balance Warning",
                         "Insufficient funds.",
-                        "Current: " + currentBalance + "\nAfter transaction: " + currentBalance.subtract(amount) + "\nProceed anyway?"
+                        "Current available: " + currentBalance + "\nAfter transaction: " + currentBalance.subtract(amount) + "\nProceed anyway?"
                 );
                 if (!confirm) return;
             }
@@ -234,23 +286,92 @@ public class TransactionsController {
 
         LocalDate date = SmartDateFormatter.getDate(datePicker);
         LocalDate dueDate = SmartDateFormatter.getDate(dueDatePicker);
-        var user = userSession.getCurrentUser();
+
+        if (user.getAppMode() == AppMode.PERIODIC && typeBox.getValue() == TransactionType.EXPENSE &&
+                !selectedItem.getGroup().getName().equalsIgnoreCase("Savings") &&
+                !selectedItem.getGroup().getName().equalsIgnoreCase("System")) {
+            BudgetPeriod activePeriod = budgetService.getActivePeriod(user);
+            if (activePeriod != null) {
+                CategoryBudget budget = budgetService.getBudgetsForPeriod(activePeriod).stream()
+                        .filter(b -> b.getCategoryGroup().getId().equals(selectedItem.getGroup().getId()))
+                        .findFirst().orElse(null);
+                if (budget != null) {
+                    BigDecimal newSpent = budget.getSpentAmount().add(amount);
+                    if (newSpent.compareTo(budget.getAllocatedAmount()) > 0) {
+                        boolean increased = showIncreaseLimitDialog(selectedItem.getGroup(), budget.getAllocatedAmount(), newSpent);
+                        if (!increased) return;
+                    }
+                }
+            }
+        }
 
         if (transactionToEdit != null) {
             financeService.deleteTransaction(transactionToEdit.getId(), user);
         }
 
-        financeService.addTransaction(user, titleField.getText(), amount, typeBox.getValue(),
-                selectedItem, date, notesArea.getText(), dueDate,
-                statusBox.getValue(), priorityBox.getValue());
+        try {
+            financeService.addTransaction(user, titleField.getText(), amount, typeBox.getValue(),
+                    selectedItem, date, notesArea.getText(), dueDate,
+                    statusBox.getValue(), priorityBox.getValue());
+            resetForm();
+            loadData();
+        } catch (IllegalArgumentException ex) {
+            loadData();
+            navigationService.showAlert("Error", ex.getMessage());
+        }
+    }
 
-        resetForm();
-        loadData();
+    private boolean showIncreaseLimitDialog(CategoryGroup group, BigDecimal currentLimit, BigDecimal required) {
+        TextInputDialog dialog = new TextInputDialog(currentLimit.toString());
+        dialog.setTitle("Increase Budget Limit");
+        dialog.setHeaderText("Current limit for " + group.getName() + " is " + currentLimit +
+                ". You need at least " + required + " to add this transaction.");
+        dialog.setContentText("New limit:");
+
+        Optional<String> result = dialog.showAndWait();
+        if (result.isPresent()) {
+            try {
+                BigDecimal newLimit = new BigDecimal(result.get());
+                if (newLimit.compareTo(required) >= 0) {
+                    BudgetPeriod activePeriod = budgetService.getActivePeriod(userSession.getCurrentUser());
+                    if (activePeriod != null) {
+                        budgetService.setCategoryBudget(activePeriod, group, newLimit);
+                        return true;
+                    }
+                } else {
+                    navigationService.showAlert("Invalid Limit", "New limit must be at least " + required);
+                }
+            } catch (NumberFormatException e) {
+                navigationService.showAlert("Error", "Invalid number format");
+            }
+        }
+        return false;
     }
 
     @FXML
     private void handleCancelEdit() {
         resetForm();
+    }
+
+    private void checkEmptyState() {
+        User user = userSession.getCurrentUser();
+        List<CategoryGroup> visibleGroups = categoryService.getUserVisibleGroups(user);
+
+        boolean hasAnySubcategory = false;
+        for (CategoryGroup group : visibleGroups) {
+            if (!categoryService.getItemsForGroup(group.getId()).isEmpty()) {
+                hasAnySubcategory = true;
+                break;
+            }
+        }
+
+        if (!hasAnySubcategory && masterData.isEmpty()) {
+            emptyStateOverlay.setVisible(true);
+            emptyStateOverlay.toFront();
+        } else {
+            emptyStateOverlay.setVisible(false);
+            emptyStateOverlay.toBack();
+        }
     }
 
     private void setupTypeChangeListener() {
@@ -259,30 +380,38 @@ public class TransactionsController {
 
             List<CategoryGroup> groups = categoryService.getGroupsForUserByType(userSession.getCurrentUser(), newV);
             groupBox.setItems(FXCollections.observableArrayList(groups));
-            if (!groups.isEmpty()) {
-                groupBox.getSelectionModel().selectFirst();
-            } else {
+
+            boolean hasGroups = !groups.isEmpty();
+
+            titleField.setDisable(!hasGroups);
+            amountField.setDisable(!hasGroups);
+            groupBox.setDisable(!hasGroups);
+            datePicker.setDisable(!hasGroups);
+            notesArea.setDisable(!hasGroups);
+
+            if (!hasGroups) {
                 groupBox.getSelectionModel().clearSelection();
                 categoryBox.getItems().clear();
-                // Тільки якщо ми НЕ в режимі редагування показуємо алерт, щоб не спамило
-                if (transactionToEdit == null) {
-                    navigationService.showAlert("Info", "No category groups for this type. Please create some in Category Settings.");
-                }
-            }
-
-            boolean income = newV == TransactionType.INCOME;
-            dueDatePicker.setDisable(income);
-            statusBox.setDisable(income);
-            priorityBox.setDisable(income);
-
-            if (income) {
-                dueDatePicker.setValue(null);
-                statusBox.setValue(TransactionStatus.COMPLETED);
-                priorityBox.setValue(Priority.STANDARD);
+                categoryBox.setDisable(true);
+                addTransactionButton.setText("No Categories Found");
+                addTransactionButton.setDisable(true);
+                statusBox.setDisable(true);
+                priorityBox.setDisable(true);
+                dueDatePicker.setDisable(true);
             } else {
-                statusBox.setDisable(false);
-                priorityBox.setDisable(false);
-                dueDatePicker.setDisable(statusBox.getValue() != TransactionStatus.PENDING);
+                if (transactionToEdit == null) {
+                    groupBox.getSelectionModel().selectFirst();
+                }
+                addTransactionButton.setText(transactionToEdit == null ? "Add Transaction" : "Update Transaction");
+                boolean income = newV == TransactionType.INCOME;
+                statusBox.setDisable(income);
+                priorityBox.setDisable(income);
+                dueDatePicker.setDisable(income || statusBox.getValue() != TransactionStatus.PENDING);
+                if (income) {
+                    dueDatePicker.setValue(null);
+                    statusBox.setValue(TransactionStatus.COMPLETED);
+                    priorityBox.setValue(Priority.STANDARD);
+                }
             }
         });
     }
@@ -297,20 +426,26 @@ public class TransactionsController {
                 categoryBox.getItems().clear();
                 categoryBox.setDisable(true);
                 categoryBox.setTooltip(formSubTooltip);
+                addTransactionButton.setDisable(true);
                 return;
             }
             List<CategoryItem> items = categoryService.getItemsForGroup(newV.getId());
             categoryBox.setItems(FXCollections.observableArrayList(items));
-            categoryBox.setDisable(false);
-            categoryBox.setTooltip(null);
 
-            // Вибираємо перший елемент тільки якщо ми зараз нічого не редагуємо
-            if (transactionToEdit == null) {
-                if (!items.isEmpty()) {
+            boolean hasItems = !items.isEmpty();
+            categoryBox.setDisable(!hasItems);
+            addTransactionButton.setDisable(!hasItems);
+
+            if (hasItems) {
+                categoryBox.setTooltip(null);
+                if (transactionToEdit == null) {
                     categoryBox.getSelectionModel().selectFirst();
-                } else {
-                    categoryBox.getSelectionModel().clearSelection();
                 }
+            } else {
+                Tooltip emptyTooltip = new Tooltip("No subcategories available");
+                categoryBox.setTooltip(emptyTooltip);
+                categoryBox.getSelectionModel().clearSelection();
+                addTransactionButton.setText("Select Subcategory");
             }
         });
     }
@@ -347,6 +482,7 @@ public class TransactionsController {
         searchField.clear();
 
         filterStatus.setValue(null);
+        filterType.setValue(null);
         filterCategory.setValue(null);
         filterSubcategory.getItems().clear();
         filterSubcategory.setValue(null);
@@ -376,22 +512,29 @@ public class TransactionsController {
             @Override
             protected void updateItem(TransactionType item, boolean empty) {
                 super.updateItem(item, empty);
-                getStyleClass().removeAll("amount-income", "amount-expense");
+                getStyleClass().removeAll("amount-income", "amount-expense", "amount-transfer");
                 if (empty || item == null) {
                     setText(null);
                 } else {
                     setText(item.name());
-                    if (item == TransactionType.INCOME) {
-                        getStyleClass().add("amount-income");
-                    } else {
-                        getStyleClass().add("amount-expense");
+                    switch (item) {
+                        case INCOME -> getStyleClass().add("amount-income");
+                        case EXPENSE -> getStyleClass().add("amount-expense");
+                        case TRANSFER -> getStyleClass().add("amount-transfer");
                     }
                 }
             }
         });
 
-        colCategory.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getCategoryItem().getGroup().getName()));
-        colSubcategory.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getCategoryItem().getName()));
+        colCategory.setCellValueFactory(d -> {
+            String name = d.getValue().getSnapshotGroupName();
+            return new SimpleStringProperty(name != null ? name : "Unknown");
+        });
+
+        colSubcategory.setCellValueFactory(d -> {
+            String name = d.getValue().getSnapshotItemName();
+            return new SimpleStringProperty(name != null ? name : "Unknown");
+        });
 
         colStatus.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getStatus().name()));
         colStatus.setCellFactory(c -> new StatusTableCell());
@@ -404,10 +547,24 @@ public class TransactionsController {
     }
 
     private void initializeComboBoxes() {
-        typeBox.getItems().setAll(TransactionType.values());
+        typeBox.getItems().setAll(TransactionType.INCOME, TransactionType.EXPENSE); // TRANSFER приховано
         statusBox.getItems().setAll(TransactionStatus.values());
         priorityBox.getItems().setAll(Priority.values());
+
         filterStatus.getItems().setAll(TransactionStatus.values());
+        filterType.getItems().setAll(null, TransactionType.INCOME, TransactionType.EXPENSE, TransactionType.TRANSFER);
+        filterType.setCellFactory(lv -> new ListCell<TransactionType>() {
+            @Override protected void updateItem(TransactionType item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? "All Types" : item.name());
+            }
+        });
+        filterType.setButtonCell(new ListCell<TransactionType>() {
+            @Override protected void updateItem(TransactionType item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? "All Types" : item.name());
+            }
+        });
 
         setupComboBoxDisplay(groupBox);
         setupComboBoxDisplay(categoryBox);
@@ -424,19 +581,33 @@ public class TransactionsController {
         });
 
         User user = userSession.getCurrentUser();
-        List<CategoryGroup> groups = categoryService.getGroupsForUser(user);
+        List<CategoryGroup> groups = categoryService.getUserVisibleGroups(user);
         filterCategory.setItems(FXCollections.observableArrayList(groups));
     }
 
     private void loadData() {
-        masterData.setAll(financeService.getUserTransactions(userSession.getCurrentUser()));
+        User user = userSession.getCurrentUser();
+
+        if (user.getAppMode() == AppMode.PERIODIC) {
+            BudgetPeriod active = budgetService.getActivePeriod(user);
+            if (active != null) {
+                masterData.setAll(transactionRepository.findAllByBudgetPeriod(active));
+            } else {
+                masterData.clear();
+            }
+        } else {
+            masterData.setAll(financeService.getUserTransactions(user));
+        }
+
         applyFilters();
+        checkEmptyState();
     }
 
     private void applyFilters() {
         transactionFilter.setStartDate(SmartDateFormatter.getDate(filterStartDate));
         transactionFilter.setEndDate(SmartDateFormatter.getDate(filterEndDate));
         transactionFilter.setStatus(filterStatus.getValue());
+        transactionFilter.setType(filterType.getValue());
         transactionFilter.setCategoryGroup(filterCategory.getValue());
         transactionFilter.setCategoryItem(filterSubcategory.getValue());
         transactionFilter.setSearchText(searchField.getText());
@@ -445,7 +616,7 @@ public class TransactionsController {
 
         List<Transaction> filtered = transactionFilter.filter(masterData);
         transactionsTable.setItems(FXCollections.observableArrayList(filtered));
-        calculateAndShowStats(masterData);
+        calculateAndShowStats();
     }
 
     private BigDecimal parseBigDecimal(String text) {
@@ -456,11 +627,11 @@ public class TransactionsController {
         }
     }
 
-    private void calculateAndShowStats(List<Transaction> list) {
+    private void calculateAndShowStats() {
         BigDecimal income = BigDecimal.ZERO, expense = BigDecimal.ZERO;
-        for (Transaction t : list) {
+        for (Transaction t : masterData) {
             if (t.getType() == TransactionType.INCOME) income = income.add(t.getAmount());
-            else expense = expense.add(t.getAmount());
+            else if (t.getType() == TransactionType.EXPENSE) expense = expense.add(t.getAmount());
         }
         var u = userSession.getCurrentUser();
         String sym = u.getCurrency() != null ? u.getCurrency().getSymbol() : "$";
@@ -469,30 +640,30 @@ public class TransactionsController {
         totalExpenseLabel.setText("- " + sym + " " + expense);
     }
 
-    // --- ВИПРАВЛЕНО: Заповнення групи та підкатегорії під час редагування за ID ---
     public void startEdit(Transaction t) {
         if (t == null) return;
         this.transactionToEdit = t;
         titleField.setText(t.getTitle());
         amountField.setText(t.getAmount() != null ? t.getAmount().toString() : "");
 
-        // 1. Встановлюємо тип. Спрацьовує лістенер і заповнює список groupBox
         typeBox.setValue(t.getType());
 
-        // 2. Шукаємо відповідну групу за ID у новому списку і вибираємо її
-        CategoryGroup targetGroup = groupBox.getItems().stream()
-                .filter(g -> g.getId().equals(t.getCategoryItem().getGroup().getId()))
-                .findFirst()
-                .orElse(null);
-        groupBox.setValue(targetGroup);
+        if (t.getCategoryItem() != null && t.getCategoryItem().getGroup() != null) {
+            CategoryGroup targetGroup = groupBox.getItems().stream()
+                    .filter(g -> g.getId().equals(t.getCategoryItem().getGroup().getId()))
+                    .findFirst()
+                    .orElse(null);
+            groupBox.setValue(targetGroup);
 
-        // 3. Відбувся вибір групи. Спрацьовує лістенер і заповнює список categoryBox.
-        // Тепер знаходимо потрібну підкатегорію за ID.
-        CategoryItem targetItem = categoryBox.getItems().stream()
-                .filter(item -> item.getId().equals(t.getCategoryItem().getId()))
-                .findFirst()
-                .orElse(null);
-        categoryBox.setValue(targetItem);
+            CategoryItem targetItem = categoryBox.getItems().stream()
+                    .filter(item -> item.getId().equals(t.getCategoryItem().getId()))
+                    .findFirst()
+                    .orElse(null);
+            categoryBox.setValue(targetItem);
+        } else {
+            groupBox.getSelectionModel().clearSelection();
+            categoryBox.getSelectionModel().clearSelection();
+        }
 
         statusBox.setValue(t.getStatus());
         priorityBox.setValue(t.getPriority());
@@ -506,8 +677,26 @@ public class TransactionsController {
     }
 
     public void deleteTransaction(Transaction t) {
-        if (navigationService.showConfirmation("Delete Transaction", "Delete '" + t.getTitle() + "'?", "Funds will be restored.")) {
-            financeService.deleteTransaction(t.getId(), userSession.getCurrentUser());
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Delete Transaction");
+        alert.setHeaderText("Delete '" + t.getTitle() + "'?");
+        alert.setContentText("Do you want to refund the amount to your balance?");
+        ButtonType refundBtn = new ButtonType("Delete with Refund");
+        ButtonType noRefundBtn = new ButtonType("Delete without Refund (keep history)");
+        ButtonType cancelBtn = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+        alert.getButtonTypes().setAll(refundBtn, noRefundBtn, cancelBtn);
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent()) {
+            if (result.get() == refundBtn) {
+                financeService.deleteTransaction(t.getId(), userSession.getCurrentUser());
+                navigationService.showAlert("Success", "Transaction deleted and funds refunded.");
+            } else if (result.get() == noRefundBtn) {
+                financeService.deleteTransactionWithoutRefund(t.getId(), userSession.getCurrentUser());
+                navigationService.showAlert("Success", "Transaction removed from history (balance unchanged).");
+            } else {
+                return;
+            }
             loadData();
         }
     }

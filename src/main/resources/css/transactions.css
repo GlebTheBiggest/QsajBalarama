@@ -1,3 +1,4 @@
+/*transactions.css*/
 .input-label {
     -fx-font-size: 11px;
     -fx-font-weight: bold;
@@ -70,6 +71,11 @@
 
 .amount-expense {
     -fx-text-fill: -color-danger !important;
+    -fx-font-weight: bold;
+}
+
+.amount-transfer {
+    -fx-text-fill: #7f8c8d !important;
     -fx-font-weight: bold;
 }
 

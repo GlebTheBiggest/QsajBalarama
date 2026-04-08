@@ -15,20 +15,24 @@ public class AmountTableCell extends TableCell<Transaction, BigDecimal> {
     @Override
     protected void updateItem(BigDecimal amount, boolean empty) {
         super.updateItem(amount, empty);
-        getStyleClass().removeAll("amount-income", "amount-expense");
+        getStyleClass().removeAll("amount-income", "amount-expense", "amount-transfer");
 
         if (empty || amount == null || getTableRow() == null || getTableRow().getItem() == null) {
             setText(null);
         } else {
             Transaction t = getTableRow().getItem();
-            String prefix = (t.getType() == TransactionType.INCOME) ? "+ " : "- ";
-            setText(prefix + currencySymbol + " " + amount);
-
+            String prefix;
             if (t.getType() == TransactionType.INCOME) {
+                prefix = "+ ";
                 getStyleClass().add("amount-income");
-            } else {
+            } else if (t.getType() == TransactionType.EXPENSE) {
+                prefix = "- ";
                 getStyleClass().add("amount-expense");
+            } else {
+                prefix = "↺ ";
+                getStyleClass().add("amount-transfer");
             }
+            setText(prefix + currencySymbol + " " + amount);
         }
     }
 }

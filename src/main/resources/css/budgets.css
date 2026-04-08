@@ -1,0 +1,129 @@
+/* budgets.css */
+
+/* === КНОПКА ЗАКРИТТЯ (Небезпечна дія) === */
+.button-danger-outline {
+    -fx-background-color: transparent;
+    -fx-text-fill: -color-danger;
+    -fx-border-color: -color-danger;
+    -fx-border-radius: 8;
+    -fx-border-width: 1.5;
+}
+
+.button-danger-outline:hover {
+    -fx-background-color: -color-danger;
+    -fx-text-fill: white;
+}
+
+/* === РЯДОК БЮДЖЕТУ (КОНВЕРТ) === */
+.budget-row {
+    -fx-background-color: white;
+    -fx-padding: 15 20;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: transparent;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.05), 5, 0, 0, 2);
+}
+
+.budget-row:hover {
+    -fx-border-color: -color-primary;
+    -fx-effect: dropshadow(three-pass-box, rgba(26, 188, 156, 0.2), 8, 0, 0, 3);
+}
+
+/* === ТЕКСТИ В РЯДКУ === */
+.budget-category-name {
+    -fx-font-weight: bold;
+    -fx-font-size: 15px;
+    -fx-text-fill: -color-text-header;
+}
+
+.budget-details {
+    -fx-text-fill: -color-text-muted;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+}
+
+/* Кольори в залежності від статусу витрат */
+.progress-good {
+    -fx-accent: -color-success;
+}
+
+.progress-warning {
+    -fx-accent: -color-warning;
+}
+
+.progress-danger {
+    -fx-accent: -color-danger;
+}
+
+.budget-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.05), 8, 0, 0, 3);
+    -fx-padding: 18 20;
+    -fx-border-color: #ecf0f1;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+}
+
+.budget-card:hover {
+    -fx-border-color: -color-primary;
+    -fx-effect: dropshadow(three-pass-box, rgba(26, 188, 156, 0.2), 10, 0, 0, 4);
+}
+
+.budget-group-name {
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+    -fx-text-fill: -color-text-header;
+}
+
+.budget-spent-remaining {
+    -fx-font-size: 13px;
+    -fx-text-fill: -color-text-muted;
+    -fx-font-weight: 500;
+}
+
+.budget-limit-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: -color-text-muted;
+    -fx-font-weight: 600;
+    -fx-min-width: 40px;
+}
+
+.budget-input {
+    -fx-min-height: 38px !important;
+    -fx-pref-height: 38px !important;
+    -fx-max-height: 38px !important;
+    -fx-alignment: CENTER_RIGHT;
+    -fx-font-weight: bold;
+}
+
+.budget-progress-bar {
+    -fx-min-height: 18px;
+    -fx-pref-height: 18px;
+    -fx-max-height: 18px;
+    -fx-background-color: transparent;
+}
+
+.budget-progress-bar .track {
+    -fx-background-color: -color-input-bg;
+    -fx-background-radius: 10px;
+    -fx-border-radius: 10px;
+}
+
+.budget-progress-bar .bar {
+    -fx-background-radius: 10px;
+    -fx-padding: 9px;
+}
+
+.button-danger-outline {
+    -fx-background-color: transparent;
+    -fx-text-fill: -color-danger;
+    -fx-border-color: -color-danger;
+    -fx-border-radius: 8;
+    -fx-border-width: 1.5;
+}
+
+.button-danger-outline:hover {
+    -fx-background-color: -color-danger;
+    -fx-text-fill: white;
+}

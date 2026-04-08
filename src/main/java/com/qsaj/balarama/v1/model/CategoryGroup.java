@@ -36,4 +36,9 @@ public class CategoryGroup {
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<CategoryItem> items = new ArrayList<>();
+
+    // ДОДАНО: Каскадне видалення конвертів. Якщо видалити категорію, її бюджет теж зникне.
+    @OneToMany(mappedBy = "categoryGroup", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<CategoryBudget> categoryBudgets = new ArrayList<>();
 }

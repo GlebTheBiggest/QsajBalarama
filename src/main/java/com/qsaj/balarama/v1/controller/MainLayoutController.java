@@ -11,14 +11,24 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MainLayoutController {
-    @FXML private BorderPane rootPane;
-    @FXML private BorderPane contentPane;
-    @FXML private Button btnDashboard;
-    @FXML private Button btnTransactions;
-    @FXML private Button btnSavings;
-    @FXML private Button btnCategories;
-    @FXML private Button btnAnalytics;
-    @FXML private Button btnProfile;
+    @FXML
+    private BorderPane rootPane;
+    @FXML
+    private BorderPane contentPane;
+    @FXML
+    private Button btnDashboard;
+    @FXML
+    private Button btnTransactions;
+    @FXML
+    private Button btnBudgets; // НОВА КНОПКА
+    @FXML
+    private Button btnSavings;
+    @FXML
+    private Button btnCategories;
+    @FXML
+    private Button btnAnalytics;
+    @FXML
+    private Button btnProfile;
 
     private final NavigationService navigationService;
     private final Map<Button, String> viewMapping;
@@ -39,6 +49,7 @@ public class MainLayoutController {
     private void initializeViewMapping() {
         viewMapping.put(btnDashboard, "/fxml/dashboard.fxml");
         viewMapping.put(btnTransactions, "/fxml/transactions.fxml");
+        viewMapping.put(btnBudgets, "/fxml/budgets.fxml"); // НОВИЙ МАРШРУТ
         viewMapping.put(btnSavings, "/fxml/savings.fxml");
         viewMapping.put(btnCategories, "/fxml/category-settings.fxml");
         viewMapping.put(btnProfile, "/fxml/profile.fxml");
@@ -57,14 +68,12 @@ public class MainLayoutController {
     private void navigateToView(Button button) {
         String fxmlPath = viewMapping.get(button);
         if (fxmlPath == null) return;
-        System.out.println("Loading view: " + fxmlPath); // додати
         try {
             Node view = navigationService.loadView(fxmlPath);
-            System.out.println("View loaded, setting to center"); // додати
             contentPane.setCenter(view);
             setActive(button);
         } catch (Exception e) {
-            e.printStackTrace(); // додати, щоб побачити стек помилки
+            e.printStackTrace();
             navigationService.showAlert("Navigation Error", "Could not load view: " + fxmlPath);
         }
     }
@@ -79,6 +88,12 @@ public class MainLayoutController {
         navigateToView(btnTransactions);
     }
 
+    // НОВИЙ МЕТОД ДЛЯ КНОПКИ
+    @FXML
+    private void showBudgets() {
+        navigateToView(btnBudgets);
+    }
+
     @FXML
     private void showSavingsGoals() {
         navigateToView(btnSavings);
@@ -86,7 +101,6 @@ public class MainLayoutController {
 
     @FXML
     private void showCategorySettings() {
-
         navigateToView(btnCategories);
     }
 

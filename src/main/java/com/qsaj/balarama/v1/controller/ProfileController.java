@@ -2,13 +2,17 @@ package com.qsaj.balarama.v1.controller;
 
 import com.google.inject.Inject;
 import com.qsaj.balarama.v1.model.User;
+import com.qsaj.balarama.v1.model.enums.AppMode;
 import com.qsaj.balarama.v1.model.enums.Currency;
 import com.qsaj.balarama.v1.service.AuthService;
 import com.qsaj.balarama.v1.service.NavigationService;
+import com.qsaj.balarama.v1.service.SavingsService;
 import com.qsaj.balarama.v1.session.UserSession;
 import com.qsaj.balarama.v1.util.ValidationUtil;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+
+import java.math.BigDecimal;
 
 public class ProfileController {
     @FXML private Label headerUsernameLabel;
@@ -21,17 +25,21 @@ public class ProfileController {
     @FXML private PasswordField confirmPasswordField;
     @FXML private Label rankLabel;
     @FXML private Label daysActiveLabel;
+    @FXML private Label savingsInGoalsLabel;
+    @FXML private Label totalSavingsLabel;   // НОВЕ ПОЛЕ
 
     private final UserSession userSession;
     private final AuthService authService;
     private final NavigationService navigationService;
+    private final SavingsService savingsService;
 
     @Inject
     public ProfileController(UserSession userSession, AuthService authService,
-                             NavigationService navigationService) {
+                             NavigationService navigationService, SavingsService savingsService) {
         this.userSession = userSession;
         this.authService = authService;
         this.navigationService = navigationService;
+        this.savingsService = savingsService;
     }
 
     @FXML
@@ -81,6 +89,27 @@ public class ProfileController {
 
         rankLabel.setText(user.getTitle());
         daysActiveLabel.setText(user.getDaysActive() + " days");
+
+        updateSavingsSection(user);
+    }
+
+    private void updateSavingsSection(User user) {
+        String symbol = user.getCurrency().getSymbol();
+        BigDecimal totalInGoals = savingsService.getTotalSavingsInGoals(user);
+        BigDecimal unallocated = user.getUnallocatedSavings() != null ? user.getUnallocatedSavings() : BigDecimal.ZERO;
+        BigDecimal totalSavings = totalInGoals.add(unallocated);
+
+        if (user.getAppMode() == AppMode.PERIODIC) {
+            savingsInGoalsLabel.setText(symbol + " " + totalInGoals);
+            savingsInGoalsLabel.setStyle("-fx-text-fill: -color-success;");
+            totalSavingsLabel.setText(symbol + " " + totalSavings);
+            totalSavingsLabel.setStyle("-fx-text-fill: -color-success;");
+        } else {
+            savingsInGoalsLabel.setText("Available in Periodic mode");
+            savingsInGoalsLabel.setStyle("-fx-text-fill: #95a5a6; -fx-font-style: italic;");
+            totalSavingsLabel.setText("Available in Periodic mode");
+            totalSavingsLabel.setStyle("-fx-text-fill: #95a5a6; -fx-font-style: italic;");
+        }
     }
 
     @FXML

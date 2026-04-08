@@ -2,11 +2,13 @@ package com.qsaj.balarama.v1.repository.impl;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.qsaj.balarama.v1.model.BudgetPeriod;
 import com.qsaj.balarama.v1.model.Transaction;
 import com.qsaj.balarama.v1.model.User;
 import com.qsaj.balarama.v1.repository.TransactionRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
+import jakarta.persistence.TypedQuery;
 
 import java.util.List;
 
@@ -29,8 +31,7 @@ public class TransactionRepositoryImpl implements TransactionRepository {
             em.persist(transaction);
             tx.commit();
         } catch (Exception e) {
-            assert tx != null;
-            if (tx.isActive()) tx.rollback();
+            if (tx != null && tx.isActive()) tx.rollback();
             throw e;
         }
     }
@@ -38,9 +39,20 @@ public class TransactionRepositoryImpl implements TransactionRepository {
     @Override
     public List<Transaction> findAllByUser(User user) {
         try (EntityManager em = emp.get()) {
-            return em.createQuery("SELECT t FROM Transaction t WHERE t.user = :user ORDER BY t.date DESC", Transaction.class)
-                    .setParameter("user", user)
-                    .getResultList();
+            TypedQuery<Transaction> query = em.createQuery(
+                    "SELECT t FROM Transaction t WHERE t.user = :user ORDER BY t.date DESC", Transaction.class);
+            query.setParameter("user", user);
+            return query.getResultList();
+        }
+    }
+
+    @Override
+    public List<Transaction> findAllByBudgetPeriod(BudgetPeriod period) {
+        try (EntityManager em = emp.get()) {
+            TypedQuery<Transaction> query = em.createQuery(
+                    "SELECT t FROM Transaction t WHERE t.budgetPeriod = :period ORDER BY t.date DESC", Transaction.class);
+            query.setParameter("period", period);
+            return query.getResultList();
         }
     }
 
@@ -59,13 +71,10 @@ public class TransactionRepositoryImpl implements TransactionRepository {
             tx = em.getTransaction();
             tx.begin();
             Transaction t = em.find(Transaction.class, id);
-            if (t != null) {
-                em.remove(t);
-            }
+            if (t != null) em.remove(t);
             tx.commit();
         } catch (Exception e) {
-            assert tx != null;
-            if (tx.isActive()) tx.rollback();
+            if (tx != null && tx.isActive()) tx.rollback();
             throw e;
         }
     }

@@ -66,6 +66,10 @@ public class SmartDateFormatter {
 
         // Якщо значення немає, парсимо текст (ручний ввід)
         String text = picker.getEditor() != null ? picker.getEditor().getText() : null;
+        return getDateFromString(text);
+    }
+
+    public static LocalDate getDateFromString(String text) {
         if (text != null && text.length() == 10) {
             try {
                 return LocalDate.parse(text, DATE_FORMATTER);

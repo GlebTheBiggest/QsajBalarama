@@ -1,6 +1,8 @@
 package com.qsaj.balarama.v1.model;
 
-import com.qsaj.balarama.v1.model.enums.*;
+import com.qsaj.balarama.v1.model.enums.Priority;
+import com.qsaj.balarama.v1.model.enums.TransactionStatus;
+import com.qsaj.balarama.v1.model.enums.TransactionType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,6 +13,7 @@ import java.time.LocalDate;
 @Table(name = "transactions")
 @Getter
 @Setter
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -29,23 +32,27 @@ public class Transaction {
     @Column(nullable = false)
     private TransactionType type;
 
-    // Instead of Category enum, link to a CategoryItem
     @ManyToOne
-    @JoinColumn(name = "category_item_id", nullable = false)
+    @JoinColumn(name = "category_item_id", nullable = true)
     private CategoryItem categoryItem;
+
+    @Column(name = "snapshot_group_name")
+    private String snapshotGroupName;
+
+    @Column(name = "snapshot_item_name")
+    private String snapshotItemName;
+
+    @Column(name = "snapshot_color")
+    private String snapshotColor;
 
     @Column(nullable = false)
     private LocalDate date;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-
-    @Column(length = 500)
-    private String notes;
-
     @Column(name = "due_date")
     private LocalDate dueDate;
+
+    @Column(columnDefinition = "TEXT")
+    private String notes;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -54,4 +61,28 @@ public class Transaction {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Priority priority;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @ManyToOne
+    @JoinColumn(name = "budget_period_id", nullable = true)
+    private BudgetPeriod budgetPeriod;
+
+    @PrePersist
+    @PreUpdate
+    protected void onSave() {
+        if (date == null) date = LocalDate.now();
+        if (status == null) status = TransactionStatus.COMPLETED;
+        if (priority == null) priority = Priority.STANDARD;
+
+        if (categoryItem != null) {
+            this.snapshotItemName = categoryItem.getName();
+            if (categoryItem.getGroup() != null) {
+                this.snapshotGroupName = categoryItem.getGroup().getName();
+                this.snapshotColor = categoryItem.getGroup().getColor();
+            }
+        }
+    }
 }

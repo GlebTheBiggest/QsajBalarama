@@ -1,5 +1,7 @@
+// ========== User.java ==========
 package com.qsaj.balarama.v1.model;
 
+import com.qsaj.balarama.v1.model.enums.AppMode;
 import com.qsaj.balarama.v1.model.enums.Currency;
 import jakarta.persistence.*;
 import lombok.*;
@@ -33,18 +35,30 @@ public class User {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    // Загальний баланс (гроші, які можна витрачати)
     @Column(name = "saved_amount")
     private BigDecimal savedAmount;
+
+    // Нерозподілені заощадження (накопичені з закритих періодів або додані вручну)
+    @Column(name = "unallocated_savings")
+    private BigDecimal unallocatedSavings;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Currency currency;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "app_mode", nullable = false)
+    @Builder.Default
+    private AppMode appMode = AppMode.CONTINUOUS;
+
     @PrePersist
     protected void onCreate() {
         if (createdAt == null) createdAt = LocalDateTime.now();
         if (savedAmount == null) savedAmount = BigDecimal.ZERO;
+        if (unallocatedSavings == null) unallocatedSavings = BigDecimal.ZERO;
         if (currency == null) currency = Currency.USD;
+        if (appMode == null) appMode = AppMode.CONTINUOUS;
     }
 
     public long getDaysActive() {
