@@ -1,7 +1,11 @@
 package com.qsaj.balarama.v1.controller;
 
 import com.google.inject.Inject;
-import com.qsaj.balarama.v1.model.*;
+import com.qsaj.balarama.v1.model.BudgetPeriod;
+import com.qsaj.balarama.v1.model.CategoryBudget;
+import com.qsaj.balarama.v1.model.CategoryGroup;
+import com.qsaj.balarama.v1.model.Transaction;
+import com.qsaj.balarama.v1.model.User;
 import com.qsaj.balarama.v1.model.enums.AppMode;
 import com.qsaj.balarama.v1.model.enums.TransactionType;
 import com.qsaj.balarama.v1.repository.UserRepository;
@@ -16,6 +20,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.util.Duration;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -25,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class BudgetsController {
 
@@ -51,12 +57,13 @@ public class BudgetsController {
     private final UserRepository userRepo;
     private final NavigationService nav;
     private final SavingsService savingsService;
-    private final FinanceService financeService; // додати
+    private final FinanceService financeService;
 
     private BudgetPeriod currentPeriod;
     private final Map<CategoryGroup, BudgetRowUI> rowUIMap = new HashMap<>();
 
     private static class BudgetRowUI {
+        CheckBox enableCheckBox;
         TextField allocInput;
         Label spentRemainingLabel;
         ProgressBar progressBar;
@@ -66,14 +73,14 @@ public class BudgetsController {
     public BudgetsController(UserSession userSession, BudgetService budgetService,
                              CategoryServiceImpl categoryService, UserRepository userRepo,
                              NavigationService nav, SavingsService savingsService,
-                             FinanceService financeService) { // додати параметр
+                             FinanceService financeService) {
         this.userSession = userSession;
         this.budgetService = budgetService;
         this.categoryService = categoryService;
         this.userRepo = userRepo;
         this.nav = nav;
         this.savingsService = savingsService;
-        this.financeService = financeService; // додати
+        this.financeService = financeService;
     }
 
     @FXML
@@ -126,6 +133,14 @@ public class BudgetsController {
             placeholder.getStyleClass().add("input-label");
             budgetsContainer.getChildren().add(placeholder);
         } else {
+            // Видаляємо всі бюджетні записи з нульовим лімітом (захист від старих даних)
+            List<CategoryBudget> budgets = budgetService.getBudgetsForPeriod(currentPeriod);
+            for (CategoryBudget b : budgets) {
+                if (b.getAllocatedAmount().compareTo(BigDecimal.ZERO) == 0) {
+                    budgetService.removeCategoryBudget(currentPeriod, b.getCategoryGroup());
+                }
+            }
+
             periodInfoLabel.setText("Active Period");
             datesLabel.setText(currentPeriod.getStartDate() + "  –  " + currentPeriod.getEndDate());
             datesLabel.setVisible(true);
@@ -300,6 +315,7 @@ public class BudgetsController {
         }
 
         User user = userSession.getCurrentUser();
+
         // Перевірка наявності минулих транзакцій за цей період
         boolean hasPastTransactions = false;
         List<BudgetPeriod> pastPeriods = budgetService.getAllPeriods(user);
@@ -315,6 +331,7 @@ public class BudgetsController {
             }
         }
 
+        // Починаємо новий період (без імпорту)
         budgetService.startNewPeriod(user, start, end);
         refresh();
 
@@ -352,62 +369,82 @@ public class BudgetsController {
     private void handleSaveBudgets() {
         if (currentPeriod == null) return;
         for (Map.Entry<CategoryGroup, BudgetRowUI> entry : rowUIMap.entrySet()) {
-            saveBudgetForGroup(entry.getKey(), entry.getValue().allocInput);
+            saveBudgetForGroup(entry.getKey(), entry.getValue().enableCheckBox, entry.getValue().allocInput);
         }
         nav.showAlert("Success", "All budgets saved!");
     }
 
-    private void saveBudgetForGroup(CategoryGroup group, TextField field) {
-        BigDecimal amount = parseAmount(field.getText());
-        try {
-            budgetService.setCategoryBudget(currentPeriod, group, amount);
-            updateBudgetRow(group, amount);
-        } catch (IllegalArgumentException e) {
-            nav.showAlert("Error", e.getMessage());
-            CategoryBudget existing = budgetService.getBudgetsForPeriod(currentPeriod).stream()
-                    .filter(b -> b.getCategoryGroup().getId().equals(group.getId()))
-                    .findFirst().orElse(null);
-            if (existing != null) {
-                field.setText(existing.getAllocatedAmount().toString());
-            } else {
-                field.setText("");
+    private void saveBudgetForGroup(CategoryGroup group, CheckBox enableCheckBox, TextField field) {
+        if (enableCheckBox.isSelected()) {
+            BigDecimal amount;
+            try {
+                String text = field.getText();
+                amount = (text == null || text.isBlank()) ? BigDecimal.ZERO : new BigDecimal(text);
+                if (amount.compareTo(BigDecimal.ZERO) < 0) {
+                    nav.showAlert("Error", "Limit cannot be negative.");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                nav.showAlert("Error", "Invalid amount format.");
+                return;
             }
+            if (amount.compareTo(BigDecimal.ZERO) == 0) {
+                budgetService.removeCategoryBudget(currentPeriod, group);
+                updateBudgetRow(group, enableCheckBox, BigDecimal.ZERO);
+            } else {
+                try {
+                    budgetService.setCategoryBudget(currentPeriod, group, amount);
+                    updateBudgetRow(group, enableCheckBox, amount);
+                } catch (IllegalArgumentException e) {
+                    nav.showAlert("Error", e.getMessage());
+                    // Відновити попередній стан
+                    CategoryBudget existing = budgetService.getBudgetsForPeriod(currentPeriod).stream()
+                            .filter(b -> b.getCategoryGroup().getId().equals(group.getId()))
+                            .findFirst().orElse(null);
+                    if (existing != null && existing.getAllocatedAmount().compareTo(BigDecimal.ZERO) > 0) {
+                        field.setText(existing.getAllocatedAmount().toString());
+                        enableCheckBox.setSelected(true);
+                    } else {
+                        field.setText("");
+                        enableCheckBox.setSelected(false);
+                        budgetService.removeCategoryBudget(currentPeriod, group);
+                    }
+                }
+            }
+        } else {
+            budgetService.removeCategoryBudget(currentPeriod, group);
+            updateBudgetRow(group, enableCheckBox, BigDecimal.ZERO);
         }
     }
 
-    private void updateBudgetRow(CategoryGroup group, BigDecimal newAllocated) {
+    private void updateBudgetRow(CategoryGroup group, CheckBox enableCheckBox, BigDecimal newAllocated) {
         BudgetRowUI ui = rowUIMap.get(group);
         if (ui == null) return;
 
         CategoryBudget budget = budgetService.getBudgetsForPeriod(currentPeriod).stream()
                 .filter(b -> b.getCategoryGroup().getId().equals(group.getId()))
                 .findFirst().orElse(null);
-        if (budget == null) return;
 
-        BigDecimal spent = budget.getSpentAmount() != null ? budget.getSpentAmount() : BigDecimal.ZERO;
-        BigDecimal remaining = newAllocated.subtract(spent);
-
+        BigDecimal spent = (budget != null && budget.getSpentAmount() != null) ? budget.getSpentAmount() : BigDecimal.ZERO;
         String symbol = userSession.getCurrentUser().getCurrency().getSymbol();
-        ui.spentRemainingLabel.setText("Spent: " + symbol + spent + " / Left: " + symbol + remaining);
 
-        double progress = newAllocated.compareTo(BigDecimal.ZERO) > 0
-                ? spent.divide(newAllocated, 2, RoundingMode.HALF_UP).doubleValue()
-                : 0;
-        ui.progressBar.setProgress(Math.min(progress, 1));
-        ui.progressBar.getStyleClass().removeAll("progress-good", "progress-warning", "progress-danger");
-        if (progress >= 1.0) ui.progressBar.getStyleClass().add("progress-danger");
-        else if (progress >= 0.8) ui.progressBar.getStyleClass().add("progress-warning");
-        else ui.progressBar.getStyleClass().add("progress-good");
+        if (enableCheckBox.isSelected() && newAllocated.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal remaining = newAllocated.subtract(spent);
+            ui.spentRemainingLabel.setText("Spent: " + symbol + spent + " / Left: " + symbol + remaining);
+            double progress = spent.divide(newAllocated, 2, RoundingMode.HALF_UP).doubleValue();
+            ui.progressBar.setProgress(Math.min(progress, 1));
+            ui.progressBar.getStyleClass().removeAll("progress-good", "progress-warning", "progress-danger");
+            if (progress >= 1.0) ui.progressBar.getStyleClass().add("progress-danger");
+            else if (progress >= 0.8) ui.progressBar.getStyleClass().add("progress-warning");
+            else ui.progressBar.getStyleClass().add("progress-good");
+        } else {
+            ui.spentRemainingLabel.setText("Spent: " + symbol + spent + " / No limit");
+            ui.progressBar.setProgress(0);
+            ui.progressBar.getStyleClass().removeAll("progress-good", "progress-warning", "progress-danger");
+            ui.progressBar.getStyleClass().add("progress-good");
+        }
 
         updateSummary(currentPeriod);
-    }
-
-    private BigDecimal parseAmount(String text) {
-        try {
-            return text == null || text.isBlank() ? BigDecimal.ZERO : new BigDecimal(text);
-        } catch (Exception e) {
-            return BigDecimal.ZERO;
-        }
     }
 
     private void buildBudgetRows() {
@@ -430,9 +467,9 @@ public class BudgetsController {
                     .filter(b -> b.getCategoryGroup().getId().equals(group.getId()))
                     .findFirst().orElse(null);
 
-            BigDecimal alloc = budget != null ? budget.getAllocatedAmount() : BigDecimal.ZERO;
-            BigDecimal spent = budget != null ? budget.getSpentAmount() : BigDecimal.ZERO;
-            BigDecimal remaining = alloc.subtract(spent);
+            boolean hasLimit = (budget != null && budget.getAllocatedAmount() != null && budget.getAllocatedAmount().compareTo(BigDecimal.ZERO) > 0);
+            BigDecimal alloc = hasLimit ? budget.getAllocatedAmount() : BigDecimal.ZERO;
+            BigDecimal spent = (budget != null && budget.getSpentAmount() != null) ? budget.getSpentAmount() : BigDecimal.ZERO;
 
             VBox card = new VBox(12);
             card.getStyleClass().add("budget-card");
@@ -446,7 +483,8 @@ public class BudgetsController {
             groupName.getStyleClass().add("budget-group-name");
             Region spacer = new Region();
             HBox.setHgrow(spacer, Priority.ALWAYS);
-            Label spentRemainingLabel = new Label("Spent: " + symbol + spent + " / Left: " + symbol + remaining);
+            Label spentRemainingLabel = new Label(hasLimit ? "Spent: " + symbol + spent + " / Left: " + symbol + alloc.subtract(spent)
+                    : "Spent: " + symbol + spent + " / No limit");
             spentRemainingLabel.getStyleClass().add("budget-spent-remaining");
 
             header.getChildren().addAll(colorDot, groupName, spacer, spentRemainingLabel);
@@ -454,28 +492,47 @@ public class BudgetsController {
             HBox row = new HBox(15);
             row.setAlignment(Pos.CENTER_LEFT);
 
+            CheckBox enableCheckBox = new CheckBox("Enable limit");
+            enableCheckBox.setSelected(hasLimit);
+            enableCheckBox.getStyleClass().add("budget-checkbox");
+
             Label limitLabel = new Label("Limit:");
             limitLabel.getStyleClass().add("budget-limit-label");
 
-            TextField allocInput = new TextField(alloc.compareTo(BigDecimal.ZERO) == 0 ? "" : alloc.toString());
+            TextField allocInput = new TextField(hasLimit ? alloc.toString() : "");
             allocInput.setPromptText("0.00");
             allocInput.setPrefWidth(120);
             allocInput.getStyleClass().addAll("text-field", "budget-input");
+            allocInput.setDisable(!hasLimit);
 
-            double progress = alloc.compareTo(BigDecimal.ZERO) > 0 ? spent.divide(alloc, 2, RoundingMode.HALF_UP).doubleValue() : 0;
+            enableCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+                allocInput.setDisable(!newVal);
+                if (!newVal) {
+                    allocInput.setText("");
+                } else if (allocInput.getText().isEmpty()) {
+                    allocInput.setText("0");
+                }
+            });
+
+            double progress = hasLimit ? spent.divide(alloc, 2, RoundingMode.HALF_UP).doubleValue() : 0;
             ProgressBar pb = new ProgressBar(progress);
             pb.setMaxWidth(Double.MAX_VALUE);
             pb.getStyleClass().add("budget-progress-bar");
             HBox.setHgrow(pb, Priority.ALWAYS);
-            if (progress >= 1.0) pb.getStyleClass().add("progress-danger");
-            else if (progress >= 0.8) pb.getStyleClass().add("progress-warning");
-            else pb.getStyleClass().add("progress-good");
+            if (hasLimit) {
+                if (progress >= 1.0) pb.getStyleClass().add("progress-danger");
+                else if (progress >= 0.8) pb.getStyleClass().add("progress-warning");
+                else pb.getStyleClass().add("progress-good");
+            } else {
+                pb.getStyleClass().add("progress-good");
+            }
 
-            row.getChildren().addAll(limitLabel, allocInput, pb);
+            row.getChildren().addAll(enableCheckBox, limitLabel, allocInput, pb);
             card.getChildren().addAll(header, row);
             budgetsContainer.getChildren().add(card);
 
             BudgetRowUI ui = new BudgetRowUI();
+            ui.enableCheckBox = enableCheckBox;
             ui.allocInput = allocInput;
             ui.spentRemainingLabel = spentRemainingLabel;
             ui.progressBar = pb;
@@ -483,8 +540,11 @@ public class BudgetsController {
 
             allocInput.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
                 if (!isNowFocused) {
-                    saveBudgetForGroup(group, allocInput);
+                    saveBudgetForGroup(group, enableCheckBox, allocInput);
                 }
+            });
+            enableCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+                saveBudgetForGroup(group, enableCheckBox, allocInput);
             });
         }
     }

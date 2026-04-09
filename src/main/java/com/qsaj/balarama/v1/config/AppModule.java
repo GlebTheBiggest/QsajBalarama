@@ -36,6 +36,10 @@ public class AppModule extends AbstractModule {
         // НОВІ РЕПОЗИТОРІЇ БЮДЖЕТУВАННЯ
         bind(BudgetPeriodRepository.class).to(BudgetPeriodRepositoryImpl.class).in(Singleton.class);
         bind(CategoryBudgetRepository.class).to(CategoryBudgetRepositoryImpl.class).in(Singleton.class);
+
+        // Додати в configure():
+        bind(EventRepository.class).to(EventRepositoryImpl.class);
+        bind(EventService.class).to(EventServiceImpl.class);
     }
 
     @Provides

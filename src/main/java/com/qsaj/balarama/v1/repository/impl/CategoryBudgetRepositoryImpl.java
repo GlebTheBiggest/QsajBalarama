@@ -50,6 +50,21 @@ public class CategoryBudgetRepositoryImpl implements CategoryBudgetRepository {
     }
 
     @Override
+    public void delete(CategoryBudget budget) {
+        EntityManager em = emp.get();
+        EntityTransaction tx = null;
+        try (em) {
+            tx = em.getTransaction();
+            tx.begin();
+            em.remove(em.contains(budget) ? budget : em.merge(budget));
+            tx.commit();
+        } catch (Exception e) {
+            if (tx != null && tx.isActive()) tx.rollback();
+            throw e;
+        }
+    }
+
+    @Override
     public List<CategoryBudget> findByPeriod(BudgetPeriod period) {
         try (EntityManager em = emp.get()) {
             return em.createQuery(

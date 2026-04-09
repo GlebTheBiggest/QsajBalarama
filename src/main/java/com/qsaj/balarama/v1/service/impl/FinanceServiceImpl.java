@@ -5,6 +5,7 @@ import com.qsaj.balarama.v1.model.*;
 import com.qsaj.balarama.v1.model.enums.*;
 import com.qsaj.balarama.v1.repository.*;
 import com.qsaj.balarama.v1.service.BudgetService;
+import com.qsaj.balarama.v1.service.EventService;
 import com.qsaj.balarama.v1.service.FinanceService;
 
 import java.math.BigDecimal;
@@ -20,6 +21,7 @@ public class FinanceServiceImpl implements FinanceService {
     private final SavingsGoalRepository savingsGoalRepo;
     private final CategoryGroupRepository categoryGroupRepo;
     private final CategoryItemRepository categoryItemRepository;
+    private final EventService eventService;
 
     @Inject
     public FinanceServiceImpl(TransactionRepository txRepo,
@@ -28,7 +30,8 @@ public class FinanceServiceImpl implements FinanceService {
                               CategoryBudgetRepository categoryBudgetRepo,
                               SavingsGoalRepository savingsGoalRepo,
                               CategoryGroupRepository categoryGroupRepo,
-                              CategoryItemRepository categoryItemRepository) {
+                              CategoryItemRepository categoryItemRepository,
+                              EventService eventService) {
         this.txRepo = txRepo;
         this.userRepo = userRepo;
         this.budgetService = budgetService;
@@ -36,6 +39,7 @@ public class FinanceServiceImpl implements FinanceService {
         this.savingsGoalRepo = savingsGoalRepo;
         this.categoryGroupRepo = categoryGroupRepo;
         this.categoryItemRepository = categoryItemRepository;
+        this.eventService = eventService;
     }
 
     @Override
@@ -59,22 +63,26 @@ public class FinanceServiceImpl implements FinanceService {
             }
         }
 
+        // Перевірка бюджету – тільки якщо запис існує і allocatedAmount > 0
         if (user.getAppMode() == AppMode.PERIODIC && type == TransactionType.EXPENSE &&
                 categoryItem != null && categoryItem.getGroup() != null &&
                 !categoryItem.getGroup().getName().equalsIgnoreCase("Savings") &&
                 !categoryItem.getGroup().getName().equalsIgnoreCase("System")) {
             BudgetPeriod activePeriod = budgetService.getActivePeriod(user);
             if (activePeriod != null) {
-                CategoryBudget budget = categoryBudgetRepo.findByPeriodAndGroup(activePeriod, categoryItem.getGroup())
-                        .orElse(null);
-                if (budget != null && budget.getAllocatedAmount().compareTo(BigDecimal.ZERO) > 0) {
-                    BigDecimal newSpent = budget.getSpentAmount().add(amount);
-                    if (newSpent.compareTo(budget.getAllocatedAmount()) > 0) {
-                        throw new IllegalArgumentException("Exceeds budget limit for " + categoryItem.getGroup().getName() +
-                                ". Limit: " + budget.getAllocatedAmount() + ", spent: " + budget.getSpentAmount() +
-                                ", attempted: " + amount);
+                Optional<CategoryBudget> budgetOpt = categoryBudgetRepo.findByPeriodAndGroup(activePeriod, categoryItem.getGroup());
+                if (budgetOpt.isPresent()) {
+                    CategoryBudget budget = budgetOpt.get();
+                    if (budget.getAllocatedAmount().compareTo(BigDecimal.ZERO) > 0) {
+                        BigDecimal newSpent = budget.getSpentAmount().add(amount);
+                        if (newSpent.compareTo(budget.getAllocatedAmount()) > 0) {
+                            throw new IllegalArgumentException("Exceeds budget limit for " + categoryItem.getGroup().getName() +
+                                    ". Limit: " + budget.getAllocatedAmount() + ", spent: " + budget.getSpentAmount() +
+                                    ", attempted: " + amount);
+                        }
                     }
                 }
+                // Якщо budgetOpt.isEmpty() – ліміту немає, транзакція дозволена
             }
         }
 
@@ -97,6 +105,9 @@ public class FinanceServiceImpl implements FinanceService {
         if (type != TransactionType.TRANSFER) {
             syncSavingsGoalAfterTransaction(user, type, categoryItem, amount, false);
         }
+
+        eventService.logEvent(user, EventType.TRANSACTION_ADDED,
+                "Added transaction: " + title + " (" + amount + " " + type + ")");
     }
 
     @Override
@@ -140,6 +151,7 @@ public class FinanceServiceImpl implements FinanceService {
         }
 
         txRepo.save(tx);
+        // Не логуємо системні транзакції як події – вони внутрішні
     }
 
     @Override
@@ -157,6 +169,9 @@ public class FinanceServiceImpl implements FinanceService {
             syncSavingsGoalAfterTransaction(user, tx.getType(), tx.getCategoryItem(), tx.getAmount(), true);
         }
         txRepo.delete(id);
+
+        eventService.logEvent(user, EventType.TRANSACTION_DELETED,
+                "Deleted transaction with refund: " + tx.getTitle());
     }
 
     @Override
@@ -164,6 +179,9 @@ public class FinanceServiceImpl implements FinanceService {
         Transaction tx = txRepo.findById(id);
         if (tx == null) return;
         txRepo.delete(id);
+
+        eventService.logEvent(user, EventType.TRANSACTION_DELETED,
+                "Deleted transaction without refund: " + tx.getTitle());
     }
 
     private void syncSavingsGoalAfterTransaction(User user, TransactionType type,

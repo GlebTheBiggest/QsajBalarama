@@ -42,6 +42,11 @@
     -fx-font-size: 13px;
 }
 
+.budget-checkbox {
+    -fx-font-size: 13px;
+    -fx-text-fill: -color-text-muted;
+}
+
 /* Кольори в залежності від статусу витрат */
 .progress-good {
     -fx-accent: -color-success;

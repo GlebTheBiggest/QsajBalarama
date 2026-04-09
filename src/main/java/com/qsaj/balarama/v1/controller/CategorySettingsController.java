@@ -127,7 +127,7 @@ public class CategorySettingsController {
     }
 
     private void setupTypeComboBoxes() {
-        groupTypeCombo.setItems(FXCollections.observableArrayList(TransactionType.values()));
+        groupTypeCombo.setItems(FXCollections.observableArrayList(TransactionType.INCOME, TransactionType.EXPENSE));
         groupTypeCombo.getSelectionModel().selectFirst();
 
         filterTypeCombo.setItems(FXCollections.observableArrayList(TransactionType.values()));

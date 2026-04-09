@@ -2,12 +2,14 @@ package com.qsaj.balarama.v1.service.impl;
 
 import com.google.inject.Inject;
 import com.qsaj.balarama.v1.model.*;
+import com.qsaj.balarama.v1.model.enums.EventType;
 import com.qsaj.balarama.v1.model.enums.Priority;
 import com.qsaj.balarama.v1.model.enums.TransactionStatus;
 import com.qsaj.balarama.v1.model.enums.TransactionType;
 import com.qsaj.balarama.v1.repository.SavingsGoalRepository;
 import com.qsaj.balarama.v1.repository.TransactionRepository;
 import com.qsaj.balarama.v1.repository.UserRepository;
+import com.qsaj.balarama.v1.service.EventService;
 import com.qsaj.balarama.v1.service.FinanceService;
 import com.qsaj.balarama.v1.service.SavingsService;
 
@@ -23,18 +25,21 @@ public class SavingsServiceImpl implements SavingsService {
     private final CategoryServiceImpl categoryService;
     private final UserRepository userRepository;
     private final TransactionRepository transactionRepository;
+    private final EventService eventService;
 
     @Inject
     public SavingsServiceImpl(SavingsGoalRepository savingsRepository,
                               FinanceService financeService,
                               CategoryServiceImpl categoryService,
                               UserRepository userRepository,
-                              TransactionRepository transactionRepository) {
+                              TransactionRepository transactionRepository,
+                              EventService eventService) {
         this.savingsRepository = savingsRepository;
         this.financeService = financeService;
         this.categoryService = categoryService;
         this.userRepository = userRepository;
         this.transactionRepository = transactionRepository;
+        this.eventService = eventService;
     }
 
     @Override
@@ -47,6 +52,9 @@ public class SavingsServiceImpl implements SavingsService {
 
         CategoryGroup incGroup = getOrCreateGroup(user, "Income", TransactionType.INCOME, "#27ae60");
         categoryService.saveItem(CategoryItem.builder().name(name).group(incGroup).build());
+
+        eventService.logEvent(user, EventType.SAVINGS_GOAL_CREATED,
+                "Created savings goal: " + name + " (target: " + targetAmount + " " + user.getCurrency().getSymbol() + ")");
     }
 
     private CategoryGroup getOrCreateGroup(User user, String name, TransactionType type, String color) {
@@ -79,6 +87,9 @@ public class SavingsServiceImpl implements SavingsService {
         financeService.addTransaction(user, "Add to goal from main: " + goal.getName(), amount,
                 TransactionType.EXPENSE, item, LocalDate.now(),
                 "Added from main balance", null, TransactionStatus.COMPLETED, Priority.STANDARD);
+
+        eventService.logEvent(user, EventType.TRANSFER_TO_GOAL,
+                "Added " + amount + " " + user.getCurrency().getSymbol() + " to goal '" + goal.getName() + "' from main balance");
     }
 
     @Override
@@ -100,6 +111,9 @@ public class SavingsServiceImpl implements SavingsService {
         financeService.addSystemTransaction(user, "Transfer from unallocated to goal: " + goal.getName(),
                 amount, TransactionType.TRANSFER, LocalDate.now(),
                 "Moved from unallocated savings to envelope");
+
+        eventService.logEvent(user, EventType.TRANSFER_TO_GOAL,
+                "Added " + amount + " " + user.getCurrency().getSymbol() + " to goal '" + goal.getName() + "' from unallocated savings");
     }
 
     @Override
@@ -119,6 +133,9 @@ public class SavingsServiceImpl implements SavingsService {
         financeService.addSystemTransaction(user, "Withdraw from goal to unallocated: " + goal.getName(),
                 amount, TransactionType.TRANSFER, LocalDate.now(),
                 "Withdrawn to unallocated savings");
+
+        eventService.logEvent(user, EventType.TRANSFER_FROM_GOAL,
+                "Withdrew " + amount + " " + user.getCurrency().getSymbol() + " from goal '" + goal.getName() + "' to unallocated savings");
     }
 
     @Override
@@ -135,6 +152,9 @@ public class SavingsServiceImpl implements SavingsService {
         goal.setCurrentAmount(goal.getCurrentAmount().subtract(amount));
         goal.setTotalWithdrawals(goal.getTotalWithdrawals().add(amount));
         savingsRepository.update(goal);
+
+        eventService.logEvent(user, EventType.TRANSFER_FROM_GOAL,
+                "Withdrew " + amount + " " + user.getCurrency().getSymbol() + " from goal '" + goal.getName() + "' to main balance");
     }
 
     @Override
@@ -159,6 +179,9 @@ public class SavingsServiceImpl implements SavingsService {
 
         financeService.addSystemTransaction(user, "Transfer between goals: " + fromGoal.getName() + " → " + toGoal.getName(),
                 amount, TransactionType.TRANSFER, LocalDate.now(), "Internal transfer");
+
+        eventService.logEvent(user, EventType.TRANSFER_BETWEEN_GOALS,
+                "Transferred " + amount + " " + user.getCurrency().getSymbol() + " from goal '" + fromGoal.getName() + "' to '" + toGoal.getName() + "'");
     }
 
     @Override
@@ -198,6 +221,9 @@ public class SavingsServiceImpl implements SavingsService {
         financeService.addSystemTransaction(user, "Goal completed: " + goal.getName(),
                 goal.getTargetAmount(), TransactionType.TRANSFER, LocalDate.now(),
                 "You've reached your goal! Note: " + note);
+
+        eventService.logEvent(user, EventType.SAVINGS_GOAL_COMPLETED,
+                "Completed savings goal: " + goal.getName() + " (Note: " + (note != null ? note : "none") + ")");
     }
 
     @Override
@@ -238,6 +264,7 @@ public class SavingsServiceImpl implements SavingsService {
         SavingsGoal goal = savingsRepository.findById(goalId);
         if (goal == null) return;
 
+        String goalName = goal.getName();
         if (goal.getCurrentAmount().compareTo(BigDecimal.ZERO) > 0 && !goal.isCompleted()) {
             user.setUnallocatedSavings(user.getUnallocatedSavings().add(goal.getCurrentAmount()));
             userRepository.update(user);
@@ -251,6 +278,9 @@ public class SavingsServiceImpl implements SavingsService {
         categoryService.deleteItemsByGroupNameAndItemName(user, "Income", goal.getName());
 
         savingsRepository.delete(goalId);
+
+        eventService.logEvent(user, EventType.SAVINGS_GOAL_DELETED,
+                "Deleted savings goal: " + goalName);
     }
 
     @Override
@@ -264,5 +294,8 @@ public class SavingsServiceImpl implements SavingsService {
 
         user.setUnallocatedSavings(user.getUnallocatedSavings().subtract(amount));
         userRepository.update(user);
+
+        eventService.logEvent(user, EventType.TRANSFER_FROM_GOAL,
+                "Transferred " + amount + " " + user.getCurrency().getSymbol() + " from unallocated savings to main balance");
     }
 }

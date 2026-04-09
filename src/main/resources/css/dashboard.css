@@ -90,6 +90,11 @@
     -fx-text-fill: #95a5a6;
 }
 
+.recent-tx-transfer {
+    -fx-text-fill: #7f8c8d !important;
+    -fx-font-weight: bold;
+}
+
 /* Calendar */
 .calendar-month-label {
     -fx-font-weight: bold;

@@ -5,11 +5,13 @@ import com.qsaj.balarama.v1.model.CategoryGroup;
 import com.qsaj.balarama.v1.model.CategoryItem;
 import com.qsaj.balarama.v1.model.User;
 import com.qsaj.balarama.v1.model.enums.Currency;
+import com.qsaj.balarama.v1.model.enums.EventType;
 import com.qsaj.balarama.v1.model.enums.TransactionType;
 import com.qsaj.balarama.v1.repository.CategoryGroupRepository;
 import com.qsaj.balarama.v1.repository.CategoryItemRepository;
 import com.qsaj.balarama.v1.repository.UserRepository;
 import com.qsaj.balarama.v1.service.AuthService;
+import com.qsaj.balarama.v1.service.EventService;
 import com.qsaj.balarama.v1.util.ValidationUtil;
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -19,14 +21,17 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final CategoryGroupRepository categoryGroupRepository;
     private final CategoryItemRepository categoryItemRepository;
+    private final EventService eventService;
 
     @Inject
     public AuthServiceImpl(UserRepository userRepository,
                            CategoryGroupRepository categoryGroupRepository,
-                           CategoryItemRepository categoryItemRepository) {
+                           CategoryItemRepository categoryItemRepository,
+                           EventService eventService) {
         this.userRepository = userRepository;
         this.categoryGroupRepository = categoryGroupRepository;
         this.categoryItemRepository = categoryItemRepository;
+        this.eventService = eventService;
     }
 
     @Override
@@ -73,7 +78,6 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void createSystemCategories(User user) {
-        // Системна група для переказів (дохід)
         CategoryGroup sysIncome = CategoryGroup.builder()
                 .name("System")
                 .type(TransactionType.INCOME)
@@ -88,7 +92,6 @@ public class AuthServiceImpl implements AuthService {
                 .build();
         categoryItemRepository.save(unallocatedIncome);
 
-        // Системна група для переказів (видаток)
         CategoryGroup sysExpense = CategoryGroup.builder()
                 .name("System")
                 .type(TransactionType.EXPENSE)
@@ -121,6 +124,7 @@ public class AuthServiceImpl implements AuthService {
         if (!checkPassword(user, currentPassword)) throw new IllegalArgumentException("Current password is incorrect.");
         user.setPassword(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
         userRepository.update(user);
+        eventService.logEvent(user, EventType.CATEGORY_UPDATED, "Password changed"); // Умовний тип
     }
 
     @Override
@@ -129,11 +133,15 @@ public class AuthServiceImpl implements AuthService {
         user.setUsername(newUsername);
         user.setEmail(newEmail);
         userRepository.update(user);
+        eventService.logEvent(user, EventType.CATEGORY_UPDATED, "Profile updated (username/email)");
     }
 
     @Override
     public void updateCurrency(User user, Currency currency) {
+        Currency oldCurrency = user.getCurrency();
         user.setCurrency(currency);
         userRepository.update(user);
+        eventService.logEvent(user, EventType.CURRENCY_CHANGED,
+                "Changed currency from " + (oldCurrency != null ? oldCurrency.name() : "USD") + " to " + currency.name());
     }
 }

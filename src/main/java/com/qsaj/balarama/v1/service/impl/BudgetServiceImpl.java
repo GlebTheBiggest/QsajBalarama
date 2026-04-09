@@ -2,12 +2,14 @@ package com.qsaj.balarama.v1.service.impl;
 
 import com.google.inject.Inject;
 import com.qsaj.balarama.v1.model.*;
+import com.qsaj.balarama.v1.model.enums.EventType;
 import com.qsaj.balarama.v1.model.enums.TransactionType;
 import com.qsaj.balarama.v1.repository.BudgetPeriodRepository;
 import com.qsaj.balarama.v1.repository.CategoryBudgetRepository;
 import com.qsaj.balarama.v1.repository.TransactionRepository;
 import com.qsaj.balarama.v1.repository.UserRepository;
 import com.qsaj.balarama.v1.service.BudgetService;
+import com.qsaj.balarama.v1.service.EventService;
 import com.qsaj.balarama.v1.service.FinanceService;
 import com.qsaj.balarama.v1.service.NavigationService;
 
@@ -25,6 +27,7 @@ public class BudgetServiceImpl implements BudgetService {
     private final CategoryServiceImpl categoryService;
     private final TransactionRepository transactionRepo;
     private final NavigationService navigationService;
+    private final EventService eventService;
 
     @Inject
     public BudgetServiceImpl(BudgetPeriodRepository periodRepo,
@@ -33,7 +36,8 @@ public class BudgetServiceImpl implements BudgetService {
                              FinanceService financeService,
                              CategoryServiceImpl categoryService,
                              TransactionRepository transactionRepo,
-                             NavigationService navigationService) {
+                             NavigationService navigationService,
+                             EventService eventService) {
         this.periodRepo = periodRepo;
         this.budgetRepo = budgetRepo;
         this.userRepo = userRepo;
@@ -41,6 +45,7 @@ public class BudgetServiceImpl implements BudgetService {
         this.categoryService = categoryService;
         this.transactionRepo = transactionRepo;
         this.navigationService = navigationService;
+        this.eventService = eventService;
     }
 
     @Override
@@ -63,61 +68,9 @@ public class BudgetServiceImpl implements BudgetService {
                 .active(true)
                 .build();
         periodRepo.save(newPeriod);
-        initializeBudgetsForPeriod(newPeriod);
+        eventService.logEvent(user, EventType.PERIOD_STARTED,
+                "Started budget period: " + startDate + " – " + endDate);
         return newPeriod;
-    }
-
-    @Override
-    public void startNewPeriodWithImport(User user, LocalDate startDate, LocalDate endDate, boolean importTransactions) {
-        // Перевіряємо наявність минулих транзакцій
-        boolean hasPastTransactions = false;
-        List<BudgetPeriod> allPeriods = periodRepo.findAllByUser(user);
-        for (BudgetPeriod p : allPeriods) {
-            if (p.getStartDate().equals(startDate) && p.getEndDate().equals(endDate)) {
-                List<Transaction> pastTx = transactionRepo.findAllByUser(user).stream()
-                        .filter(t -> !t.getDate().isBefore(startDate) && !t.getDate().isAfter(endDate))
-                        .toList();
-                if (!pastTx.isEmpty()) {
-                    hasPastTransactions = true;
-                    break;
-                }
-            }
-        }
-
-        closeActivePeriod(user);
-        BudgetPeriod newPeriod = BudgetPeriod.builder()
-                .user(user)
-                .startDate(startDate)
-                .endDate(endDate)
-                .active(true)
-                .build();
-        periodRepo.save(newPeriod);
-        initializeBudgetsForPeriod(newPeriod);
-
-        if (hasPastTransactions) {
-            navigationService.showAlert("Past Transactions Found",
-                    "There are transactions from previous periods with the same date range.\n" +
-                            "You can view them using filters on the Transactions page.\n" +
-                            "No transactions were imported to the current period.");
-        }
-    }
-
-    private void initializeBudgetsForPeriod(BudgetPeriod period) {
-        User user = period.getUser();
-        List<CategoryGroup> expenseGroups = categoryService.getGroupsForUserByType(user, TransactionType.EXPENSE)
-                .stream()
-                .filter(g -> !g.getName().equalsIgnoreCase("Savings") && !g.getName().equalsIgnoreCase("System"))
-                .toList();
-
-        for (CategoryGroup group : expenseGroups) {
-            CategoryBudget budget = CategoryBudget.builder()
-                    .budgetPeriod(period)
-                    .categoryGroup(group)
-                    .allocatedAmount(BigDecimal.ZERO)
-                    .spentAmount(BigDecimal.ZERO)
-                    .build();
-            budgetRepo.save(budget);
-        }
     }
 
     @Override
@@ -125,21 +78,19 @@ public class BudgetServiceImpl implements BudgetService {
         User user = period.getUser();
         List<Transaction> periodTransactions = transactionRepo.findAllByUser(user).stream()
                 .filter(t -> t.getType() == TransactionType.EXPENSE)
-                .filter(t -> !t.getDate().isBefore(period.getStartDate()) && !t.getDate().isAfter(period.getEndDate()))
+                .filter(t -> t.getBudgetPeriod() != null && t.getBudgetPeriod().getId().equals(period.getId()))
                 .toList();
 
         List<CategoryBudget> budgets = budgetRepo.findByPeriod(period);
         for (CategoryBudget budget : budgets) {
-            if (budget.getAllocatedAmount().compareTo(BigDecimal.ZERO) > 0) {
-                CategoryGroup group = budget.getCategoryGroup();
-                BigDecimal spent = periodTransactions.stream()
-                        .filter(t -> t.getCategoryItem() != null && t.getCategoryItem().getGroup() != null)
-                        .filter(t -> t.getCategoryItem().getGroup().getId().equals(group.getId()))
-                        .map(Transaction::getAmount)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
-                budget.setSpentAmount(spent);
-                budgetRepo.update(budget);
-            }
+            CategoryGroup group = budget.getCategoryGroup();
+            BigDecimal spent = periodTransactions.stream()
+                    .filter(t -> t.getCategoryItem() != null && t.getCategoryItem().getGroup() != null)
+                    .filter(t -> t.getCategoryItem().getGroup().getId().equals(group.getId()))
+                    .map(Transaction::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            budget.setSpentAmount(spent);
+            budgetRepo.update(budget);
         }
     }
 
@@ -149,7 +100,6 @@ public class BudgetServiceImpl implements BudgetService {
         if (activeOpt.isEmpty()) return;
 
         BudgetPeriod activePeriod = activeOpt.get();
-
         BigDecimal totalUnspent = user.getSavedAmount() != null ? user.getSavedAmount() : BigDecimal.ZERO;
         boolean negative = totalUnspent.compareTo(BigDecimal.ZERO) < 0;
         if (negative) {
@@ -167,12 +117,10 @@ public class BudgetServiceImpl implements BudgetService {
         user.setSavedAmount(BigDecimal.ZERO);
         userRepo.update(user);
 
-        String description = negative ?
-                "Debt from period " + activePeriod.getStartDate() + " – " + activePeriod.getEndDate() :
-                "Unspent from period " + activePeriod.getStartDate() + " – " + activePeriod.getEndDate();
         financeService.addSystemTransaction(
                 user,
-                description,
+                negative ? "Debt from period " + activePeriod.getStartDate() + " – " + activePeriod.getEndDate() :
+                        "Unspent from period " + activePeriod.getStartDate() + " – " + activePeriod.getEndDate(),
                 totalUnspent.abs(),
                 TransactionType.TRANSFER,
                 LocalDate.now(),
@@ -181,10 +129,19 @@ public class BudgetServiceImpl implements BudgetService {
 
         activePeriod.setActive(false);
         periodRepo.update(activePeriod);
+
+        eventService.logEvent(user, EventType.PERIOD_CLOSED,
+                "Closed period: " + activePeriod.getStartDate() + " – " + activePeriod.getEndDate() +
+                        ". Unspent: " + totalUnspent + " " + user.getCurrency().getSymbol());
     }
 
     @Override
     public void setCategoryBudget(BudgetPeriod period, CategoryGroup group, BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            removeCategoryBudget(period, group);
+            return;
+        }
+
         Optional<CategoryBudget> existingOpt = budgetRepo.findByPeriodAndGroup(period, group);
         CategoryBudget budget;
         if (existingOpt.isPresent()) {
@@ -208,7 +165,7 @@ public class BudgetServiceImpl implements BudgetService {
             User user = period.getUser();
             List<Transaction> periodTransactions = transactionRepo.findAllByUser(user).stream()
                     .filter(t -> t.getType() == TransactionType.EXPENSE)
-                    .filter(t -> !t.getDate().isBefore(period.getStartDate()) && !t.getDate().isAfter(period.getEndDate()))
+                    .filter(t -> t.getBudgetPeriod() != null && t.getBudgetPeriod().getId().equals(period.getId()))
                     .toList();
             BigDecimal spent = periodTransactions.stream()
                     .filter(t -> t.getCategoryItem() != null && t.getCategoryItem().getGroup() != null)
@@ -218,8 +175,25 @@ public class BudgetServiceImpl implements BudgetService {
             budget.setSpentAmount(spent);
         }
 
+        BigDecimal oldAmount = budget.getAllocatedAmount();
         budget.setAllocatedAmount(amount);
         budgetRepo.update(budget);
+
+        if (oldAmount.compareTo(amount) != 0) {
+            eventService.logEvent(period.getUser(), EventType.BUDGET_LIMIT_CHANGED,
+                    "Changed budget for " + group.getName() + " from " + oldAmount + " to " + amount +
+                            " " + period.getUser().getCurrency().getSymbol());
+        }
+    }
+
+    @Override
+    public void removeCategoryBudget(BudgetPeriod period, CategoryGroup group) {
+        Optional<CategoryBudget> existingOpt = budgetRepo.findByPeriodAndGroup(period, group);
+        existingOpt.ifPresent(budget -> {
+            budgetRepo.delete(budget);
+            eventService.logEvent(period.getUser(), EventType.BUDGET_LIMIT_CHANGED,
+                    "Removed budget limit for " + group.getName());
+        });
     }
 
     @Override
@@ -231,5 +205,7 @@ public class BudgetServiceImpl implements BudgetService {
     public void updatePeriod(BudgetPeriod period) {
         periodRepo.update(period);
         recalculateSpentAmounts(period);
+        eventService.logEvent(period.getUser(), EventType.PERIOD_EXTENDED,
+                "Extended period end date to: " + period.getEndDate());
     }
 }

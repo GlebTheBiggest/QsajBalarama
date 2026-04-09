@@ -12,4 +12,5 @@ public interface CategoryBudgetRepository {
     void update(CategoryBudget budget);
     List<CategoryBudget> findByPeriod(BudgetPeriod period);
     Optional<CategoryBudget> findByPeriodAndGroup(BudgetPeriod period, CategoryGroup group);
+    void delete(CategoryBudget budget);
 }

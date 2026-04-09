@@ -15,10 +15,8 @@ public interface BudgetService {
     void recalculateSpentAmounts(BudgetPeriod period);
     void closeActivePeriod(User user);
     void setCategoryBudget(BudgetPeriod period, CategoryGroup group, BigDecimal amount);
+    void removeCategoryBudget(BudgetPeriod period, CategoryGroup group);
     List<CategoryBudget> getBudgetsForPeriod(BudgetPeriod period);
     void updatePeriod(BudgetPeriod period);
-
-    // Нові методи
     List<BudgetPeriod> getAllPeriods(User user);
-    void startNewPeriodWithImport(User user, LocalDate startDate, LocalDate endDate, boolean importTransactions);
 }

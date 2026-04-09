@@ -25,11 +25,9 @@ public class CategoryBudget {
     @JoinColumn(name = "category_group_id", nullable = false)
     private CategoryGroup categoryGroup;
 
-    // Скільки грошей ти виділив на цю категорію на цей місяць (напр. 300)
     @Column(name = "allocated_amount", nullable = false)
     private BigDecimal allocatedAmount;
 
-    // Скільки грошей ти вже витратив з цих 300
     @Column(name = "spent_amount", nullable = false)
     private BigDecimal spentAmount;
 
@@ -39,7 +37,6 @@ public class CategoryBudget {
         if (spentAmount == null) spentAmount = BigDecimal.ZERO;
     }
 
-    // Зручний метод для отримання залишку
     public BigDecimal getRemainingAmount() {
         return allocatedAmount.subtract(spentAmount);
     }

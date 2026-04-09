@@ -3,7 +3,9 @@ package com.qsaj.balarama.v1.controller;
 import com.google.inject.Inject;
 import com.qsaj.balarama.v1.model.*;
 import com.qsaj.balarama.v1.model.enums.*;
+import com.qsaj.balarama.v1.repository.TransactionRepository;
 import com.qsaj.balarama.v1.service.BudgetService;
+import com.qsaj.balarama.v1.service.EventService;
 import com.qsaj.balarama.v1.service.impl.CategoryServiceImpl;
 import com.qsaj.balarama.v1.service.FinanceService;
 import com.qsaj.balarama.v1.session.UserSession;
@@ -24,6 +26,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -34,7 +37,7 @@ public class DashboardController {
     @FXML private Label expenseLabel;
     @FXML private Label incomeLabel;
     @FXML private BarChart<String, Number> expenseBarChart;
-    @FXML private VBox recentTransactionsContainer;
+    @FXML private VBox recentActivityContainer;
     @FXML private GridPane calendarGrid;
     @FXML private Label calendarMonthLabel;
     @FXML private ComboBox<TransactionStatus> calendarFilterCombo;
@@ -48,6 +51,8 @@ public class DashboardController {
     private final FinanceService financeService;
     private final CategoryServiceImpl categoryService;
     private final BudgetService budgetService;
+    private final TransactionRepository transactionRepository;
+    private final EventService eventService;
     private YearMonth currentYearMonth;
     private List<Transaction> allTransactions = Collections.emptyList();
     private final Popup calendarPopup = new Popup();
@@ -55,11 +60,14 @@ public class DashboardController {
 
     @Inject
     public DashboardController(UserSession userSession, FinanceService financeService,
-                               CategoryServiceImpl categoryService, BudgetService budgetService) {
+                               CategoryServiceImpl categoryService, BudgetService budgetService,
+                               TransactionRepository transactionRepository, EventService eventService) {
         this.userSession = userSession;
         this.financeService = financeService;
         this.categoryService = categoryService;
         this.budgetService = budgetService;
+        this.transactionRepository = transactionRepository;
+        this.eventService = eventService;
         this.calendarPopup.setAutoHide(true);
     }
 
@@ -100,20 +108,17 @@ public class DashboardController {
     }
 
     private void refresh() {
-        var user = userSession.getCurrentUser();
+        User user = userSession.getCurrentUser();
         String symbol = user.getCurrency() != null ? user.getCurrency().getSymbol() : "$";
 
         welcomeLabel.setText("Hi, " + user.getUsername() + "!");
         allTransactions = financeService.getUserTransactions(user);
 
-        // Отримуємо транзакції поточного періоду, якщо він активний
         List<Transaction> periodTransactions;
         if (user.getAppMode() == AppMode.PERIODIC) {
             BudgetPeriod active = budgetService.getActivePeriod(user);
             if (active != null) {
-                periodTransactions = allTransactions.stream()
-                        .filter(t -> !t.getDate().isBefore(active.getStartDate()) && !t.getDate().isAfter(active.getEndDate()))
-                        .collect(Collectors.toList());
+                periodTransactions = transactionRepository.findAllByBudgetPeriod(active);
             } else {
                 periodTransactions = Collections.emptyList();
             }
@@ -123,7 +128,6 @@ public class DashboardController {
 
         BigDecimal income = BigDecimal.ZERO;
         BigDecimal expense = BigDecimal.ZERO;
-
         Map<String, BigDecimal> expenseByGroup = new HashMap<>();
         Map<String, String> groupColors = new HashMap<>();
 
@@ -133,23 +137,20 @@ public class DashboardController {
                 income = income.add(t.getAmount());
             } else {
                 expense = expense.add(t.getAmount());
-
                 String groupName = t.getSnapshotGroupName() != null ? t.getSnapshotGroupName() : "Deleted Group";
                 String color = t.getSnapshotColor() != null ? t.getSnapshotColor() : "#95a5a6";
-
                 expenseByGroup.merge(groupName, t.getAmount(), BigDecimal::add);
                 groupColors.putIfAbsent(groupName, color);
             }
         }
 
         BigDecimal balance = user.getSavedAmount() != null ? user.getSavedAmount() : BigDecimal.ZERO;
-
         balanceLabel.setText(symbol + " " + balance);
         incomeLabel.setText("+ " + symbol + " " + income);
         expenseLabel.setText("- " + symbol + " " + expense);
 
         updateBarChart(expenseByGroup, groupColors, symbol);
-        updateRecentTransactions(symbol);
+        updateRecentActivity();
         updateInsight(balance, income, expense);
         populateCalendar();
     }
@@ -176,12 +177,10 @@ public class DashboardController {
             dataPoint.nodeProperty().addListener((obs, oldNode, newNode) -> {
                 if (newNode != null) {
                     newNode.setStyle("-fx-bar-fill: " + color + ";");
-
                     Tooltip tooltip = new Tooltip(groupName + ":\n" + symbol + " " + value);
                     tooltip.setShowDelay(Duration.ZERO);
                     tooltip.getStyleClass().add("chart-tooltip");
                     Tooltip.install(newNode, tooltip);
-
                     newNode.setCursor(javafx.scene.Cursor.HAND);
                 }
             });
@@ -207,84 +206,69 @@ public class DashboardController {
         expenseBarChart.getData().add(series);
     }
 
-    private void updateRecentTransactions(String symbol) {
-        recentTransactionsContainer.getChildren().clear();
-
+    private void updateRecentActivity() {
+        recentActivityContainer.getChildren().clear();
         User user = userSession.getCurrentUser();
-        List<Transaction> all = financeService.getUserTransactions(user);
+        List<Event> recentEvents = eventService.getRecentEvents(user, 10);
 
-        // Визначаємо діапазон для "нещодавніх"
-        List<Transaction> recent;
-        if (user.getAppMode() == AppMode.PERIODIC) {
-            BudgetPeriod active = budgetService.getActivePeriod(user);
-            if (active != null) {
-                recent = all.stream()
-                        .filter(t -> t.getType() != TransactionType.TRANSFER) // ігноруємо перекази
-                        .filter(t -> !t.getDate().isBefore(active.getStartDate()) && !t.getDate().isAfter(active.getEndDate()))
-                        .sorted(Comparator.comparing(Transaction::getDate).reversed())
-                        .limit(5)
-                        .toList();
-            } else {
-                // Немає активного періоду – показуємо повідомлення
-                Label placeholder = new Label("Start a budget period to see recent activity.");
-                placeholder.getStyleClass().add("recent-tx-loading");
-                recentTransactionsContainer.getChildren().add(placeholder);
-                return;
-            }
-        } else {
-            // Безперервний режим – останні 30 днів або 5 останніх транзакцій
-            recent = all.stream()
-                    .filter(t -> t.getType() != TransactionType.TRANSFER)
-                    .sorted(Comparator.comparing(Transaction::getDate).reversed())
-                    .limit(5)
-                    .toList();
-        }
-
-        if (recent.isEmpty()) {
+        if (recentEvents.isEmpty()) {
             Label placeholder = new Label("No recent activity.");
             placeholder.getStyleClass().add("recent-tx-loading");
-            recentTransactionsContainer.getChildren().add(placeholder);
+            recentActivityContainer.getChildren().add(placeholder);
             return;
         }
 
-        for (Transaction t : recent) {
-            recentTransactionsContainer.getChildren().add(createTransactionRow(t, symbol));
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+        for (Event event : recentEvents) {
+            recentActivityContainer.getChildren().add(createEventRow(event, timeFormatter));
         }
     }
 
-    private HBox createTransactionRow(Transaction t, String symbol) {
+    private HBox createEventRow(Event event, DateTimeFormatter formatter) {
         HBox row = new HBox();
         row.setAlignment(Pos.CENTER_LEFT);
         row.setSpacing(15);
         row.getStyleClass().add("recent-tx-row");
 
         VBox metaBox = new VBox(3);
-        Label titleLbl = new Label(t.getTitle());
+        Label titleLbl = new Label(event.getMessage());
         titleLbl.getStyleClass().add("recent-tx-title");
 
-        String groupName = t.getSnapshotGroupName() != null ? t.getSnapshotGroupName() : "Deleted Group";
-        String itemName = t.getSnapshotItemName() != null ? t.getSnapshotItemName() : "Deleted Item";
-        String catInfo = groupName + " → " + itemName + " • " + t.getDate().toString();
+        Label timeLbl = new Label(event.getTimestamp().format(formatter));
+        timeLbl.getStyleClass().add("recent-tx-meta");
 
-        Label catLbl = new Label(catInfo);
-        catLbl.getStyleClass().add("recent-tx-meta");
-
-        metaBox.getChildren().addAll(titleLbl, catLbl);
+        metaBox.getChildren().addAll(titleLbl, timeLbl);
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        String sign = t.getType() == TransactionType.INCOME ? "+ " : "- ";
-        Label amtLbl = new Label(sign + symbol + " " + t.getAmount());
+        Label typeLbl = new Label(getIconForEventType(event.getEventType()));
+        typeLbl.getStyleClass().add("recent-tx-income");
 
-        if (t.getType() == TransactionType.INCOME) {
-            amtLbl.getStyleClass().add("recent-tx-income");
-        } else {
-            amtLbl.getStyleClass().add("recent-tx-expense");
-        }
-
-        row.getChildren().addAll(metaBox, spacer, amtLbl);
+        row.getChildren().addAll(metaBox, spacer, typeLbl);
         return row;
+    }
+
+    private String getIconForEventType(EventType type) {
+        return switch (type) {
+            case CATEGORY_CREATED, SUBCATEGORY_CREATED -> "📁 +";
+            case CATEGORY_UPDATED, SUBCATEGORY_UPDATED -> "📝";
+            case CATEGORY_DELETED, SUBCATEGORY_DELETED -> "🗑️";
+            case SAVINGS_GOAL_CREATED -> "🎯 +";
+            case SAVINGS_GOAL_DELETED -> "🎯 ✖";
+            case SAVINGS_GOAL_COMPLETED -> "🎉";
+            case TRANSFER_TO_GOAL -> "💰 → 🎯";
+            case TRANSFER_FROM_GOAL -> "🎯 → 💰";
+            case TRANSFER_BETWEEN_GOALS -> "🎯 ↔ 🎯";
+            case PERIOD_STARTED -> "📅 ▶";
+            case PERIOD_CLOSED -> "📅 ⏹";
+            case CURRENCY_CHANGED -> "💱";
+            case MODE_SWITCHED -> "🔄";
+            case BUDGET_LIMIT_CHANGED -> "💰 📈";
+            case TRANSACTION_ADDED -> "➕ 💵";
+            case TRANSACTION_DELETED -> "➖ 💵";
+            default -> "📌";
+        };
     }
 
     private void updateInsight(BigDecimal balance, BigDecimal income, BigDecimal expense) {

@@ -17,7 +17,7 @@ public class TransactionFilter {
     private LocalDate startDate;
     private LocalDate endDate;
     private TransactionStatus status;
-    private TransactionType type; // НОВЕ ПОЛЕ
+    private TransactionType type;
     private CategoryGroup categoryGroup;
     private CategoryItem categoryItem;
     private BigDecimal minAmount;
@@ -32,7 +32,7 @@ public class TransactionFilter {
         if (startDate != null && t.getDate().isBefore(startDate)) return false;
         if (endDate != null && t.getDate().isAfter(endDate)) return false;
         if (status != null && t.getStatus() != status) return false;
-        if (type != null && t.getType() != type) return false; // НОВА УМОВА
+        if (type != null && t.getType() != type) return false;
 
         if (categoryGroup != null && (t.getCategoryItem() == null || t.getCategoryItem().getGroup() == null ||
                 !t.getCategoryItem().getGroup().getId().equals(categoryGroup.getId()))) return false;

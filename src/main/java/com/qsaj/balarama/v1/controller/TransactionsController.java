@@ -5,6 +5,7 @@ import com.qsaj.balarama.v1.model.*;
 import com.qsaj.balarama.v1.model.enums.*;
 import com.qsaj.balarama.v1.repository.TransactionRepository;
 import com.qsaj.balarama.v1.service.BudgetService;
+import com.qsaj.balarama.v1.service.EventService;
 import com.qsaj.balarama.v1.service.SavingsService;
 import com.qsaj.balarama.v1.service.impl.CategoryServiceImpl;
 import com.qsaj.balarama.v1.service.FinanceService;
@@ -55,6 +56,7 @@ public class TransactionsController {
     @FXML private TextField filterMinAmount;
     @FXML private TextField filterMaxAmount;
     @FXML private TextField searchField;
+    @FXML private CheckBox onlyCurrentPeriodCheckBox;
 
     @FXML private TableView<Transaction> transactionsTable;
     @FXML private TableColumn<Transaction, LocalDate> colDate;
@@ -77,9 +79,11 @@ public class TransactionsController {
     private final BudgetService budgetService;
     private final SavingsService savingsService;
     private final TransactionRepository transactionRepository;
+    private final EventService eventService;
     private final ObservableList<Transaction> masterData = FXCollections.observableArrayList();
     private final TransactionFilter transactionFilter = new TransactionFilter();
     private Transaction transactionToEdit;
+    private boolean isOnlyCurrentPeriod = true;
 
     private static final DateTimeFormatter DATE_FORMATTER =
             DateTimeFormatter.ofPattern("dd.MM.yyyy").withResolverStyle(ResolverStyle.STRICT);
@@ -88,7 +92,7 @@ public class TransactionsController {
     public TransactionsController(UserSession userSession, FinanceService financeService,
                                   NavigationService navigationService, CategoryServiceImpl categoryService,
                                   BudgetService budgetService, SavingsService savingsService,
-                                  TransactionRepository transactionRepository) {
+                                  TransactionRepository transactionRepository, EventService eventService) {
         this.userSession = userSession;
         this.financeService = financeService;
         this.navigationService = navigationService;
@@ -96,6 +100,7 @@ public class TransactionsController {
         this.budgetService = budgetService;
         this.savingsService = savingsService;
         this.transactionRepository = transactionRepository;
+        this.eventService = eventService;
     }
 
     @FXML
@@ -114,8 +119,26 @@ public class TransactionsController {
 
         setupFilterListeners();
 
+        onlyCurrentPeriodCheckBox.selectedProperty().addListener((obs, old, newVal) -> {
+            isOnlyCurrentPeriod = newVal;
+            loadData();
+        });
+        updateOnlyCurrentPeriodState();
+
         resetForm();
         loadData();
+    }
+
+    private void updateOnlyCurrentPeriodState() {
+        User user = userSession.getCurrentUser();
+        boolean isPeriodic = user.getAppMode() == AppMode.PERIODIC;
+        onlyCurrentPeriodCheckBox.setDisable(!isPeriodic);
+        if (!isPeriodic) {
+            onlyCurrentPeriodCheckBox.setSelected(false);
+            isOnlyCurrentPeriod = false;
+        } else {
+            onlyCurrentPeriodCheckBox.setSelected(isOnlyCurrentPeriod);
+        }
     }
 
     private <T> void setupComboBoxDisplay(ComboBox<T> comboBox) {
@@ -547,7 +570,7 @@ public class TransactionsController {
     }
 
     private void initializeComboBoxes() {
-        typeBox.getItems().setAll(TransactionType.INCOME, TransactionType.EXPENSE); // TRANSFER приховано
+        typeBox.getItems().setAll(TransactionType.INCOME, TransactionType.EXPENSE);
         statusBox.getItems().setAll(TransactionStatus.values());
         priorityBox.getItems().setAll(Priority.values());
 
@@ -587,8 +610,9 @@ public class TransactionsController {
 
     private void loadData() {
         User user = userSession.getCurrentUser();
+        updateOnlyCurrentPeriodState();
 
-        if (user.getAppMode() == AppMode.PERIODIC) {
+        if (user.getAppMode() == AppMode.PERIODIC && onlyCurrentPeriodCheckBox.isSelected()) {
             BudgetPeriod active = budgetService.getActivePeriod(user);
             if (active != null) {
                 masterData.setAll(transactionRepository.findAllByBudgetPeriod(active));
@@ -688,11 +712,16 @@ public class TransactionsController {
 
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent()) {
+            User user = userSession.getCurrentUser();
             if (result.get() == refundBtn) {
-                financeService.deleteTransaction(t.getId(), userSession.getCurrentUser());
+                financeService.deleteTransaction(t.getId(), user);
+                eventService.logEvent(user, EventType.TRANSACTION_DELETED,
+                        "Deleted transaction with refund: " + t.getTitle());
                 navigationService.showAlert("Success", "Transaction deleted and funds refunded.");
             } else if (result.get() == noRefundBtn) {
-                financeService.deleteTransactionWithoutRefund(t.getId(), userSession.getCurrentUser());
+                financeService.deleteTransactionWithoutRefund(t.getId(), user);
+                eventService.logEvent(user, EventType.TRANSACTION_DELETED,
+                        "Deleted transaction without refund: " + t.getTitle());
                 navigationService.showAlert("Success", "Transaction removed from history (balance unchanged).");
             } else {
                 return;

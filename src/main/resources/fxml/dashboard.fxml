@@ -90,7 +90,7 @@
 
                 <VBox spacing="10" styleClass="content-card" VBox.vgrow="ALWAYS">
                     <Label styleClass="card-title" text="Recent Activity"/>
-                    <VBox fx:id="recentTransactionsContainer" spacing="10">
+                    <VBox fx:id="recentActivityContainer" spacing="10">
                         <Label styleClass="recent-tx-loading" text="Loading..."/>
                     </VBox>
                 </VBox>
