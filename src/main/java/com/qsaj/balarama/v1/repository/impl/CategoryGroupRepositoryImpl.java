@@ -24,74 +24,74 @@ public class CategoryGroupRepositoryImpl implements CategoryGroupRepository {
 
     @Override
     public void save(CategoryGroup group) {
-        EntityTransaction transaction = null;
-        try (EntityManager em = entityManagerProvider.get()) {
-            transaction = em.getTransaction();
-            transaction.begin();
+        EntityManager em = entityManagerProvider.get();
+        EntityTransaction tx = em.getTransaction();
+        boolean isNewTx = !tx.isActive();
+        if (isNewTx) tx.begin();
+        try {
             em.persist(group);
-            transaction.commit();
+            if (isNewTx) tx.commit();
         } catch (Exception e) {
-            if (transaction != null && transaction.isActive()) transaction.rollback();
+            if (isNewTx && tx.isActive()) tx.rollback();
             throw e;
         }
     }
 
     @Override
     public void update(CategoryGroup group) {
-        EntityTransaction transaction = null;
-        try (EntityManager em = entityManagerProvider.get()) {
-            transaction = em.getTransaction();
-            transaction.begin();
+        EntityManager em = entityManagerProvider.get();
+        EntityTransaction tx = em.getTransaction();
+        boolean isNewTx = !tx.isActive();
+        if (isNewTx) tx.begin();
+        try {
             em.merge(group);
-            transaction.commit();
+            if (isNewTx) tx.commit();
         } catch (Exception e) {
-            if (transaction != null && transaction.isActive()) transaction.rollback();
+            if (isNewTx && tx.isActive()) tx.rollback();
             throw e;
         }
     }
 
     @Override
     public void delete(Long id) {
-        EntityTransaction transaction = null;
-        try (EntityManager em = entityManagerProvider.get()) {
-            transaction = em.getTransaction();
-            transaction.begin();
+        EntityManager em = entityManagerProvider.get();
+        EntityTransaction tx = em.getTransaction();
+        boolean isNewTx = !tx.isActive();
+        if (isNewTx) tx.begin();
+        try {
             CategoryGroup group = em.find(CategoryGroup.class, id);
             if (group != null) {
                 em.remove(group);
             }
-            transaction.commit();
+            if (isNewTx) tx.commit();
         } catch (Exception e) {
-            if (transaction != null && transaction.isActive()) transaction.rollback();
+            if (isNewTx && tx.isActive()) tx.rollback();
             throw e;
         }
     }
 
     @Override
     public Optional<CategoryGroup> findById(Long id) {
-        try (EntityManager em = entityManagerProvider.get()) {
-            return Optional.ofNullable(em.find(CategoryGroup.class, id));
-        }
+        EntityManager em = entityManagerProvider.get();
+        return Optional.ofNullable(em.find(CategoryGroup.class, id));
     }
 
     @Override
     public List<CategoryGroup> findAllByUser(User user) {
-        try (EntityManager em = entityManagerProvider.get()) {
-            TypedQuery<CategoryGroup> query = em.createQuery(
-                    "SELECT g FROM CategoryGroup g WHERE g.user = :user", CategoryGroup.class);
-            query.setParameter("user", user);
-            return query.getResultList();
-        }
+        EntityManager em = entityManagerProvider.get();
+        TypedQuery<CategoryGroup> query = em.createQuery(
+                "SELECT g FROM CategoryGroup g WHERE g.user = :user", CategoryGroup.class);
+        query.setParameter("user", user);
+        return query.getResultList();
     }
 
     @Override
     public List<CategoryGroup> findAllByUserAndType(User user, TransactionType type) {
-        try (EntityManager em = entityManagerProvider.get()) {
-            TypedQuery<CategoryGroup> query = em.createQuery(
-                    "SELECT g FROM CategoryGroup g WHERE g.user = :user AND g.type = :type", CategoryGroup.class);
-            query.setParameter("user", user);
-            query.setParameter("type", type);
-            return query.getResultList();
-        }
+        EntityManager em = entityManagerProvider.get();
+        TypedQuery<CategoryGroup> query = em.createQuery(
+                "SELECT g FROM CategoryGroup g WHERE g.user = :user AND g.type = :type", CategoryGroup.class);
+        query.setParameter("user", user);
+        query.setParameter("type", type);
+        return query.getResultList();
     }
 }

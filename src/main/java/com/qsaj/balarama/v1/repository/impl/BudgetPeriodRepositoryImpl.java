@@ -22,50 +22,50 @@ public class BudgetPeriodRepositoryImpl implements BudgetPeriodRepository {
 
     @Override
     public void save(BudgetPeriod period) {
-        EntityTransaction tx = null;
-        try (EntityManager em = emp.get()) {
-            tx = em.getTransaction();
-            tx.begin();
+        EntityManager em = emp.get();
+        EntityTransaction tx = em.getTransaction();
+        boolean isNewTx = !tx.isActive();
+        if (isNewTx) tx.begin();
+        try {
             em.persist(period);
-            tx.commit();
+            if (isNewTx) tx.commit();
         } catch (Exception e) {
-            if (tx != null && tx.isActive()) tx.rollback();
+            if (isNewTx && tx.isActive()) tx.rollback();
             throw e;
         }
     }
 
     @Override
     public void update(BudgetPeriod period) {
-        EntityTransaction tx = null;
-        try (EntityManager em = emp.get()) {
-            tx = em.getTransaction();
-            tx.begin();
+        EntityManager em = emp.get();
+        EntityTransaction tx = em.getTransaction();
+        boolean isNewTx = !tx.isActive();
+        if (isNewTx) tx.begin();
+        try {
             em.merge(period);
-            tx.commit();
+            if (isNewTx) tx.commit();
         } catch (Exception e) {
-            if (tx != null && tx.isActive()) tx.rollback();
+            if (isNewTx && tx.isActive()) tx.rollback();
             throw e;
         }
     }
 
     @Override
     public Optional<BudgetPeriod> findActiveByUser(User user) {
-        try (EntityManager em = emp.get()) {
-            List<BudgetPeriod> results = em.createQuery(
-                            "SELECT p FROM BudgetPeriod p WHERE p.user = :user AND p.active = true", BudgetPeriod.class)
-                    .setParameter("user", user)
-                    .getResultList();
-            return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
-        }
+        EntityManager em = emp.get();
+        List<BudgetPeriod> results = em.createQuery(
+                        "SELECT p FROM BudgetPeriod p WHERE p.user = :user AND p.active = true", BudgetPeriod.class)
+                .setParameter("user", user)
+                .getResultList();
+        return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }
 
     @Override
     public List<BudgetPeriod> findAllByUser(User user) {
-        try (EntityManager em = emp.get()) {
-            return em.createQuery(
-                            "SELECT p FROM BudgetPeriod p WHERE p.user = :user ORDER BY p.startDate DESC", BudgetPeriod.class)
-                    .setParameter("user", user)
-                    .getResultList();
-        }
+        EntityManager em = emp.get();
+        return em.createQuery(
+                        "SELECT p FROM BudgetPeriod p WHERE p.user = :user ORDER BY p.startDate DESC", BudgetPeriod.class)
+                .setParameter("user", user)
+                .getResultList();
     }
 }

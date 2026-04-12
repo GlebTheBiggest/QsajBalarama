@@ -23,15 +23,14 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public void save(User user) {
         EntityManager em = entityManagerProvider.get();
-        EntityTransaction transaction = null;
-        try (em) {
-            transaction = em.getTransaction();
-            transaction.begin();
+        EntityTransaction tx = em.getTransaction();
+        boolean isNewTx = !tx.isActive();
+        if (isNewTx) tx.begin();
+        try {
             em.persist(user);
-            transaction.commit();
+            if (isNewTx) tx.commit();
         } catch (Exception e) {
-            assert transaction != null;
-            if (transaction.isActive()) transaction.rollback();
+            if (isNewTx && tx.isActive()) tx.rollback();
             throw e;
         }
     }
@@ -39,22 +38,22 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public void update(User user) {
         EntityManager em = entityManagerProvider.get();
-        EntityTransaction transaction = null;
-        try (em) {
-            transaction = em.getTransaction();
-            transaction.begin();
+        EntityTransaction tx = em.getTransaction();
+        boolean isNewTx = !tx.isActive();
+        if (isNewTx) tx.begin();
+        try {
             em.merge(user);
-            transaction.commit();
+            if (isNewTx) tx.commit();
         } catch (Exception e) {
-            assert transaction != null;
-            if (transaction.isActive()) transaction.rollback();
+            if (isNewTx && tx.isActive()) tx.rollback();
             throw e;
         }
     }
 
     @Override
     public Optional<User> findByUsername(String username) {
-        try (EntityManager em = entityManagerProvider.get()) {
+        EntityManager em = entityManagerProvider.get();
+        try {
             TypedQuery<User> query = em.createQuery(
                     "SELECT u FROM User u WHERE u.username = :username", User.class);
             query.setParameter("username", username);
@@ -66,7 +65,8 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public Optional<User> findByEmail(String email) {
-        try (EntityManager em = entityManagerProvider.get()) {
+        EntityManager em = entityManagerProvider.get();
+        try {
             TypedQuery<User> query = em.createQuery(
                     "SELECT u FROM User u WHERE u.email = :email", User.class);
             query.setParameter("email", email);

@@ -40,6 +40,8 @@ public class AppModule extends AbstractModule {
         // Додати в configure():
         bind(EventRepository.class).to(EventRepositoryImpl.class);
         bind(EventService.class).to(EventServiceImpl.class);
+
+        bind(MLService.class).to(MLServiceImpl.class).in(Singleton.class);
     }
 
     @Provides

@@ -20,15 +20,14 @@ public class SavingsGoalRepositoryImpl implements SavingsGoalRepository {
     @Override
     public void save(SavingsGoal goal) {
         EntityManager em = emp.get();
-        EntityTransaction tx = null;
-        try (em) {
-            tx = em.getTransaction();
-            tx.begin();
+        EntityTransaction tx = em.getTransaction();
+        boolean isNewTx = !tx.isActive();
+        if (isNewTx) tx.begin();
+        try {
             em.persist(goal);
-            tx.commit();
+            if (isNewTx) tx.commit();
         } catch (Exception e) {
-            assert tx != null;
-            if (tx.isActive()) tx.rollback();
+            if (isNewTx && tx.isActive()) tx.rollback();
             throw e;
         }
     }
@@ -36,49 +35,45 @@ public class SavingsGoalRepositoryImpl implements SavingsGoalRepository {
     @Override
     public void update(SavingsGoal goal) {
         EntityManager em = emp.get();
-        EntityTransaction tx = null;
-        try (em) {
-            tx = em.getTransaction();
-            tx.begin();
+        EntityTransaction tx = em.getTransaction();
+        boolean isNewTx = !tx.isActive();
+        if (isNewTx) tx.begin();
+        try {
             em.merge(goal);
-            tx.commit();
+            if (isNewTx) tx.commit();
         } catch (Exception e) {
-            assert tx != null;
-            if (tx.isActive()) tx.rollback();
+            if (isNewTx && tx.isActive()) tx.rollback();
             throw e;
         }
     }
 
     @Override
     public List<SavingsGoal> findAllByUser(User user) {
-        try (EntityManager em = emp.get()) {
-            return em.createQuery("SELECT s FROM SavingsGoal s WHERE s.user = :user", SavingsGoal.class)
-                    .setParameter("user", user)
-                    .getResultList();
-        }
+        EntityManager em = emp.get();
+        return em.createQuery("SELECT s FROM SavingsGoal s WHERE s.user = :user", SavingsGoal.class)
+                .setParameter("user", user)
+                .getResultList();
     }
 
     @Override
     public void delete(Long id) {
         EntityManager em = emp.get();
-        EntityTransaction tx = null;
-        try (em) {
-            tx = em.getTransaction();
-            tx.begin();
+        EntityTransaction tx = em.getTransaction();
+        boolean isNewTx = !tx.isActive();
+        if (isNewTx) tx.begin();
+        try {
             SavingsGoal s = em.find(SavingsGoal.class, id);
             if (s != null) em.remove(s);
-            tx.commit();
+            if (isNewTx) tx.commit();
         } catch (Exception e) {
-            assert tx != null;
-            if (tx.isActive()) tx.rollback();
+            if (isNewTx && tx.isActive()) tx.rollback();
             throw e;
         }
     }
 
     @Override
     public SavingsGoal findById(Long id) {
-        try (EntityManager em = emp.get()) {
-            return em.find(SavingsGoal.class, id);
-        }
+        EntityManager em = emp.get();
+        return em.find(SavingsGoal.class, id);
     }
 }

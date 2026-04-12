@@ -23,36 +23,34 @@ public class EventRepositoryImpl implements EventRepository {
     @Override
     public void save(Event event) {
         EntityManager em = emp.get();
-        EntityTransaction tx = null;
-        try (em) {
-            tx = em.getTransaction();
-            tx.begin();
+        EntityTransaction tx = em.getTransaction();
+        boolean isNewTx = !tx.isActive();
+        if (isNewTx) tx.begin();
+        try {
             em.persist(event);
-            tx.commit();
+            if (isNewTx) tx.commit();
         } catch (Exception e) {
-            if (tx != null && tx.isActive()) tx.rollback();
+            if (isNewTx && tx.isActive()) tx.rollback();
             throw e;
         }
     }
 
     @Override
     public List<Event> findAllByUser(User user) {
-        try (EntityManager em = emp.get()) {
-            TypedQuery<Event> query = em.createQuery(
-                    "SELECT e FROM Event e WHERE e.user = :user ORDER BY e.timestamp DESC", Event.class);
-            query.setParameter("user", user);
-            return query.getResultList();
-        }
+        EntityManager em = emp.get();
+        TypedQuery<Event> query = em.createQuery(
+                "SELECT e FROM Event e WHERE e.user = :user ORDER BY e.timestamp DESC", Event.class);
+        query.setParameter("user", user);
+        return query.getResultList();
     }
 
     @Override
     public List<Event> findRecentByUser(User user, int limit) {
-        try (EntityManager em = emp.get()) {
-            TypedQuery<Event> query = em.createQuery(
-                    "SELECT e FROM Event e WHERE e.user = :user ORDER BY e.timestamp DESC", Event.class);
-            query.setParameter("user", user);
-            query.setMaxResults(limit);
-            return query.getResultList();
-        }
+        EntityManager em = emp.get();
+        TypedQuery<Event> query = em.createQuery(
+                "SELECT e FROM Event e WHERE e.user = :user ORDER BY e.timestamp DESC", Event.class);
+        query.setParameter("user", user);
+        query.setMaxResults(limit);
+        return query.getResultList();
     }
 }

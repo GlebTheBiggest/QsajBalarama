@@ -49,9 +49,10 @@ public class MainLayoutController {
     private void initializeViewMapping() {
         viewMapping.put(btnDashboard, "/fxml/dashboard.fxml");
         viewMapping.put(btnTransactions, "/fxml/transactions.fxml");
-        viewMapping.put(btnBudgets, "/fxml/budgets.fxml"); // НОВИЙ МАРШРУТ
+        viewMapping.put(btnBudgets, "/fxml/budgets.fxml");
         viewMapping.put(btnSavings, "/fxml/savings.fxml");
         viewMapping.put(btnCategories, "/fxml/category-settings.fxml");
+        viewMapping.put(btnAnalytics, "/fxml/analytics.fxml");   // <-- ДОДАНО
         viewMapping.put(btnProfile, "/fxml/profile.fxml");
     }
 
@@ -106,8 +107,7 @@ public class MainLayoutController {
 
     @FXML
     private void showAnalytics() {
-        navigationService.showAlert("Info", "Analytics feature coming soon.");
-        setActive(btnAnalytics);
+        navigateToView(btnAnalytics);
     }
 
     @FXML

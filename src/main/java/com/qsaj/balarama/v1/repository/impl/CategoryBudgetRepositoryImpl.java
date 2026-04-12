@@ -23,28 +23,30 @@ public class CategoryBudgetRepositoryImpl implements CategoryBudgetRepository {
 
     @Override
     public void save(CategoryBudget budget) {
-        EntityTransaction tx = null;
-        try (EntityManager em = emp.get()) {
-            tx = em.getTransaction();
-            tx.begin();
+        EntityManager em = emp.get();
+        EntityTransaction tx = em.getTransaction();
+        boolean isNewTx = !tx.isActive();
+        if (isNewTx) tx.begin();
+        try {
             em.persist(budget);
-            tx.commit();
+            if (isNewTx) tx.commit();
         } catch (Exception e) {
-            if (tx != null && tx.isActive()) tx.rollback();
+            if (isNewTx && tx.isActive()) tx.rollback();
             throw e;
         }
     }
 
     @Override
     public void update(CategoryBudget budget) {
-        EntityTransaction tx = null;
-        try (EntityManager em = emp.get()) {
-            tx = em.getTransaction();
-            tx.begin();
+        EntityManager em = emp.get();
+        EntityTransaction tx = em.getTransaction();
+        boolean isNewTx = !tx.isActive();
+        if (isNewTx) tx.begin();
+        try {
             em.merge(budget);
-            tx.commit();
+            if (isNewTx) tx.commit();
         } catch (Exception e) {
-            if (tx != null && tx.isActive()) tx.rollback();
+            if (isNewTx && tx.isActive()) tx.rollback();
             throw e;
         }
     }
@@ -52,37 +54,35 @@ public class CategoryBudgetRepositoryImpl implements CategoryBudgetRepository {
     @Override
     public void delete(CategoryBudget budget) {
         EntityManager em = emp.get();
-        EntityTransaction tx = null;
-        try (em) {
-            tx = em.getTransaction();
-            tx.begin();
+        EntityTransaction tx = em.getTransaction();
+        boolean isNewTx = !tx.isActive();
+        if (isNewTx) tx.begin();
+        try {
             em.remove(em.contains(budget) ? budget : em.merge(budget));
-            tx.commit();
+            if (isNewTx) tx.commit();
         } catch (Exception e) {
-            if (tx != null && tx.isActive()) tx.rollback();
+            if (isNewTx && tx.isActive()) tx.rollback();
             throw e;
         }
     }
 
     @Override
     public List<CategoryBudget> findByPeriod(BudgetPeriod period) {
-        try (EntityManager em = emp.get()) {
-            return em.createQuery(
-                            "SELECT b FROM CategoryBudget b WHERE b.budgetPeriod = :period", CategoryBudget.class)
-                    .setParameter("period", period)
-                    .getResultList();
-        }
+        EntityManager em = emp.get();
+        return em.createQuery(
+                        "SELECT b FROM CategoryBudget b WHERE b.budgetPeriod = :period", CategoryBudget.class)
+                .setParameter("period", period)
+                .getResultList();
     }
 
     @Override
     public Optional<CategoryBudget> findByPeriodAndGroup(BudgetPeriod period, CategoryGroup group) {
-        try (EntityManager em = emp.get()) {
-            List<CategoryBudget> results = em.createQuery(
-                            "SELECT b FROM CategoryBudget b WHERE b.budgetPeriod = :period AND b.categoryGroup = :group", CategoryBudget.class)
-                    .setParameter("period", period)
-                    .setParameter("group", group)
-                    .getResultList();
-            return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
-        }
+        EntityManager em = emp.get();
+        List<CategoryBudget> results = em.createQuery(
+                        "SELECT b FROM CategoryBudget b WHERE b.budgetPeriod = :period AND b.categoryGroup = :group", CategoryBudget.class)
+                .setParameter("period", period)
+                .setParameter("group", group)
+                .getResultList();
+        return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }
 }

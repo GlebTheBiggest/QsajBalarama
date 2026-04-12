@@ -24,57 +24,54 @@ public class TransactionRepositoryImpl implements TransactionRepository {
     @Override
     public void save(Transaction transaction) {
         EntityManager em = emp.get();
-        EntityTransaction tx = null;
-        try (em) {
-            tx = em.getTransaction();
-            tx.begin();
+        EntityTransaction tx = em.getTransaction();
+        boolean isNewTx = !tx.isActive();
+        if (isNewTx) tx.begin();
+        try {
             em.persist(transaction);
-            tx.commit();
+            if (isNewTx) tx.commit();
         } catch (Exception e) {
-            if (tx != null && tx.isActive()) tx.rollback();
+            if (isNewTx && tx.isActive()) tx.rollback();
             throw e;
         }
     }
 
     @Override
     public List<Transaction> findAllByUser(User user) {
-        try (EntityManager em = emp.get()) {
-            TypedQuery<Transaction> query = em.createQuery(
-                    "SELECT t FROM Transaction t WHERE t.user = :user ORDER BY t.date DESC", Transaction.class);
-            query.setParameter("user", user);
-            return query.getResultList();
-        }
+        EntityManager em = emp.get();
+        TypedQuery<Transaction> query = em.createQuery(
+                "SELECT t FROM Transaction t WHERE t.user = :user ORDER BY t.date DESC", Transaction.class);
+        query.setParameter("user", user);
+        return query.getResultList();
     }
 
     @Override
     public List<Transaction> findAllByBudgetPeriod(BudgetPeriod period) {
-        try (EntityManager em = emp.get()) {
-            TypedQuery<Transaction> query = em.createQuery(
-                    "SELECT t FROM Transaction t WHERE t.budgetPeriod = :period ORDER BY t.date DESC", Transaction.class);
-            query.setParameter("period", period);
-            return query.getResultList();
-        }
+        EntityManager em = emp.get();
+        TypedQuery<Transaction> query = em.createQuery(
+                "SELECT t FROM Transaction t WHERE t.budgetPeriod = :period ORDER BY t.date DESC", Transaction.class);
+        query.setParameter("period", period);
+        return query.getResultList();
     }
 
     @Override
     public Transaction findById(Long id) {
-        try (EntityManager em = emp.get()) {
-            return em.find(Transaction.class, id);
-        }
+        EntityManager em = emp.get();
+        return em.find(Transaction.class, id);
     }
 
     @Override
     public void delete(Long id) {
         EntityManager em = emp.get();
-        EntityTransaction tx = null;
-        try (em) {
-            tx = em.getTransaction();
-            tx.begin();
+        EntityTransaction tx = em.getTransaction();
+        boolean isNewTx = !tx.isActive();
+        if (isNewTx) tx.begin();
+        try {
             Transaction t = em.find(Transaction.class, id);
             if (t != null) em.remove(t);
-            tx.commit();
+            if (isNewTx) tx.commit();
         } catch (Exception e) {
-            if (tx != null && tx.isActive()) tx.rollback();
+            if (isNewTx && tx.isActive()) tx.rollback();
             throw e;
         }
     }
