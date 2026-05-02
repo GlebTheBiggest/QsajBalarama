@@ -7,7 +7,7 @@
     -fx-background-color: white;
     -fx-background-radius: 15;
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.05), 5, 0, 0, 2);
-    -fx-padding: 15;
+    -fx-padding: 15 20; /* Slightly increased horizontal padding */
     -fx-alignment: CENTER_LEFT;
 }
 
@@ -78,20 +78,6 @@
 .change-password-header {
     -fx-font-weight: bold;
     -fx-text-fill: -color-text-header;
-}
-
-.achievement-icon-box {
-    -fx-background-color: #FFF5E0;
-    -fx-padding: 10;
-    -fx-background-radius: 10;
-}
-
-.achievement-icon-box-green {
-    -fx-background-color: #E8F6F3;
-}
-
-.achievement-icon-box-blue {
-    -fx-background-color: #EBF5FB;
 }
 
 .savings-coming-soon-label {

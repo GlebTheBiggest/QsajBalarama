@@ -6,7 +6,6 @@
 <?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.chart.PieChart?>
-<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
@@ -28,7 +27,7 @@
 
     <HBox spacing="15" alignment="CENTER_LEFT" styleClass="content-card">
         <Label text="Period:" styleClass="input-label"/>
-        <ComboBox fx:id="periodComboBox" prefWidth="250"/>
+        <ComboBox fx:id="periodComboBox" prefWidth="300"/>
         <DatePicker fx:id="customStartDate" promptText="Start (DD.MM.YYYY)"/>
         <DatePicker fx:id="customEndDate" promptText="End (DD.MM.YYYY)"/>
         <Region HBox.hgrow="ALWAYS"/>

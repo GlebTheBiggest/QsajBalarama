@@ -14,8 +14,8 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.StackPane?>
-
 <?import javafx.scene.control.CheckBox?>
+
 <StackPane xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="com.qsaj.balarama.v1.controller.TransactionsController">
@@ -27,7 +27,8 @@
             <String fx:value="/css/transactions.css" />
         </stylesheets>
 
-        <VBox minWidth="340" prefWidth="350" maxWidth="400" spacing="15" styleClass="content-card">
+        <!-- Ліва панель -->
+        <VBox minWidth="260" prefWidth="280" maxWidth="310" spacing="15" styleClass="content-card">
             <Label styleClass="card-title" text="New Transaction" />
 
             <VBox spacing="10">
@@ -83,7 +84,7 @@
             </VBox>
 
             <HBox spacing="10">
-                <Button fx:id="addTransactionButton" HBox.hgrow="ALWAYS" maxWidth="Infinity" onAction="#handleAddTransaction" styleClass="button-primary" text="Add Transaction" />
+                <Button fx:id="addTransactionButton" HBox.hgrow="ALWAYS" maxWidth="Infinity" onAction="#handleAddTransaction" styleClass="button-primary" text="Add" />
                 <Button onAction="#handleCancelEdit" styleClass="button-reset" text="Cancel" minWidth="90" />
             </HBox>
         </VBox>
@@ -115,9 +116,9 @@
                     <VBox spacing="2">
                         <Label text="Date Range" styleClass="input-label"/>
                         <HBox spacing="5" alignment="CENTER_LEFT">
-                            <DatePicker fx:id="filterStartDate" promptText="DD.MM.YYYY" prefWidth="160"/>
+                            <DatePicker fx:id="filterStartDate" promptText="DD.MM.YYYY" prefWidth="230"/>
                             <Label text="-" styleClass="date-range-separator"/>
-                            <DatePicker fx:id="filterEndDate" promptText="DD.MM.YYYY" prefWidth="160"/>
+                            <DatePicker fx:id="filterEndDate" promptText="DD.MM.YYYY" prefWidth="230"/>
                         </HBox>
                     </VBox>
 
@@ -156,8 +157,13 @@
             <TableView fx:id="transactionsTable" VBox.vgrow="ALWAYS">
                 <columns>
                     <TableColumn fx:id="colDate" minWidth="95" maxWidth="95" prefWidth="95" text="Date" />
-                    <TableColumn fx:id="colTitle" prefWidth="130" text="Title" />
-                    <TableColumn fx:id="colType" minWidth="80" maxWidth="80" prefWidth="80" text="Type" />
+
+                    <!-- ЗМЕНШЕНО ширину Title зі 130 до 115 -->
+                    <TableColumn fx:id="colTitle" prefWidth="115" text="Title" />
+
+                    <!-- ЗБІЛЬШЕНО ширину Type з 80 до 95 -->
+                    <TableColumn fx:id="colType" minWidth="95" maxWidth="95" prefWidth="95" text="Type" />
+
                     <TableColumn fx:id="colCategory" prefWidth="120" text="Group" />
                     <TableColumn fx:id="colSubcategory" prefWidth="120" text="Subcategory" />
                     <TableColumn fx:id="colStatus" minWidth="105" maxWidth="105" prefWidth="105" text="Status" />

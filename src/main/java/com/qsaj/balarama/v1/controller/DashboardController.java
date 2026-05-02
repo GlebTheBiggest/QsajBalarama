@@ -149,9 +149,11 @@ public class DashboardController {
         incomeLabel.setText("+ " + symbol + " " + income);
         expenseLabel.setText("- " + symbol + " " + expense);
 
+        boolean hasTransactions = !periodTransactions.isEmpty();
+
         updateBarChart(expenseByGroup, groupColors, symbol);
         updateRecentActivity();
-        updateInsight(balance, income, expense);
+        updateInsight(hasTransactions, balance, income, expense);
         populateCalendar();
     }
 
@@ -159,7 +161,23 @@ public class DashboardController {
         expenseBarChart.getData().clear();
         chartLegendContainer.getChildren().clear();
 
-        if (data.isEmpty()) return;
+        // Якщо немає витрат — показуємо текст замість порожнього простору
+        if (data.isEmpty()) {
+            expenseBarChart.setVisible(false);
+            expenseBarChart.setManaged(false); // Щоб графік не займав місце
+
+            Label noDataLabel = new Label("No transactions available for this period.");
+            noDataLabel.setStyle("-fx-text-fill: #95a5a6; -fx-font-style: italic; -fx-font-size: 14px; -fx-padding: 30;");
+
+            chartLegendContainer.setAlignment(Pos.CENTER);
+            chartLegendContainer.getChildren().add(noDataLabel);
+            return;
+        }
+
+        // Повертаємо видимість графіка, якщо дані є
+        expenseBarChart.setVisible(true);
+        expenseBarChart.setManaged(true);
+        chartLegendContainer.setAlignment(Pos.CENTER_LEFT);
 
         List<Map.Entry<String, BigDecimal>> entries = new ArrayList<>(data.entrySet());
         entries.sort(Map.Entry.comparingByKey());
@@ -271,16 +289,31 @@ public class DashboardController {
         };
     }
 
-    private void updateInsight(BigDecimal balance, BigDecimal income, BigDecimal expense) {
-        double progress = income.signum() > 0
-                ? expense.divide(income, 2, RoundingMode.HALF_UP).doubleValue()
-                : 1.0;
+    private void updateInsight(boolean hasTransactions, BigDecimal balance, BigDecimal income, BigDecimal expense) {
+        budgetProgressBar.getStyleClass().removeAll("budget-bar-ok", "budget-bar-danger", "budget-bar-warning");
+        insightTitleLabel.getStyleClass().removeAll("insight-ok", "insight-warning", "insight-danger");
+
+        // Захист від порожніх періодів: якщо немає транзакцій, показуємо нейтральний стан
+        if (!hasTransactions) {
+            insightTitleLabel.setText("No Transactions");
+            insightTextLabel.setText("Add transactions to see insights.");
+            insightTitleLabel.getStyleClass().add("insight-ok");
+            budgetProgressBar.setProgress(0);
+            budgetPercentLabel.setText("0%");
+            return;
+        }
+
+        // Обчислюємо прогрес витрат відносно доходу
+        double progress;
+        if (income.signum() > 0) {
+            progress = expense.divide(income, 2, RoundingMode.HALF_UP).doubleValue();
+        } else {
+            // Якщо доходу нуль, але витрати є - значить 100% витрачено
+            progress = expense.signum() > 0 ? 1.0 : 0.0;
+        }
 
         budgetProgressBar.setProgress(Math.min(progress, 1));
         budgetPercentLabel.setText((int) (progress * 100) + "%");
-
-        budgetProgressBar.getStyleClass().removeAll("budget-bar-ok", "budget-bar-danger");
-        insightTitleLabel.getStyleClass().removeAll("insight-ok", "insight-warning", "insight-danger");
 
         if (balance.signum() < 0) {
             insightTitleLabel.setText("Negative Balance");

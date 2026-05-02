@@ -101,11 +101,9 @@
 
         <VBox styleClass="stat-box">
             <HBox spacing="15" alignment="CENTER_LEFT">
-                <StackPane styleClass="achievement-icon-box">
-                    <SVGPath
-                            content="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
-                            fill="#f39c12" scaleX="1.2" scaleY="1.2"/>
-                </StackPane>
+                <SVGPath
+                        content="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                        fill="#f39c12" scaleX="1.5" scaleY="1.5"/>
                 <VBox>
                     <Label text="Current Rank" styleClass="stat-title"/>
                     <Label fx:id="rankLabel" text="..." styleClass="stat-rank-value"/>
@@ -115,11 +113,9 @@
 
         <VBox styleClass="stat-box">
             <HBox spacing="15" alignment="CENTER_LEFT">
-                <StackPane styleClass="achievement-icon-box-green">
-                    <SVGPath
-                            content="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
-                            fill="#1ABC9C" scaleX="1.2" scaleY="1.2"/>
-                </StackPane>
+                <SVGPath
+                        content="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"
+                        fill="#1ABC9C" scaleX="1.5" scaleY="1.5"/>
                 <VBox>
                     <Label text="Days with Qsaj" styleClass="stat-title"/>
                     <Label fx:id="daysActiveLabel" text="..." styleClass="stat-value"/>
@@ -129,11 +125,9 @@
 
         <VBox styleClass="stat-box">
             <HBox spacing="15" alignment="CENTER_LEFT">
-                <StackPane styleClass="achievement-icon-box-blue">
-                    <SVGPath
-                            content="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 2c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8zm-1 5v2h-2v2h2v6h2v-6h2v-2h-2V9h-2z"
-                            fill="#3498db" scaleX="1.2" scaleY="1.2"/>
-                </StackPane>
+                <SVGPath
+                        content="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.64-2.25 1.64-1.74 0-2.32-.98-2.39-1.95H7.83c.11 1.7 1.44 2.86 3.07 3.24V19h2.3v-1.65c1.69-.3 2.91-1.32 2.91-2.91-.01-2.07-1.67-2.85-3.8-3.3z"
+                        fill="#3498db" scaleX="1.5" scaleY="1.5"/>
                 <VBox>
                     <Label text="Savings in Goals" styleClass="stat-title"/>
                     <Label fx:id="savingsInGoalsLabel" styleClass="stat-value"/>
@@ -141,14 +135,11 @@
             </HBox>
         </VBox>
 
-        <!-- НОВИЙ БЛОК: Total Savings -->
         <VBox styleClass="stat-box">
             <HBox spacing="15" alignment="CENTER_LEFT">
-                <StackPane styleClass="achievement-icon-box-green">
-                    <SVGPath
-                            content="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                            fill="#1ABC9C" scaleX="1.2" scaleY="1.2"/>
-                </StackPane>
+                <SVGPath
+                        content="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"
+                        fill="#2ecc71" scaleX="1.5" scaleY="1.5"/>
                 <VBox>
                     <Label text="Total Savings" styleClass="stat-title"/>
                     <Label fx:id="totalSavingsLabel" styleClass="stat-value"/>

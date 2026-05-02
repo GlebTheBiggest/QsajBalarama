@@ -41,7 +41,7 @@ public class AppModule extends AbstractModule {
         bind(EventRepository.class).to(EventRepositoryImpl.class);
         bind(EventService.class).to(EventServiceImpl.class);
 
-        bind(MLService.class).to(MLServiceImpl.class).in(Singleton.class);
+        bind(MLService.class).to(AnalyticsServiceImpl.class).in(Singleton.class);
     }
 
     @Provides

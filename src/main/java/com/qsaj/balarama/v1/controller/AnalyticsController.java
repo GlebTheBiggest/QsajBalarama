@@ -23,6 +23,7 @@ import javafx.scene.Node;
 import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
+import javafx.util.Callback;
 import javafx.util.Duration;
 
 import java.math.BigDecimal;
@@ -88,10 +89,8 @@ public class AnalyticsController {
         customStartDate.valueProperty().addListener((obs, oldVal, newVal) -> applyCustomFilter());
         customEndDate.valueProperty().addListener((obs, oldVal, newVal) -> applyCustomFilter());
 
-        // 1. Спочатку завантажуємо елементи у список (щоб ComboBox міг їх підсвітити)
         loadPeriodsIntoComboBox();
 
-        // 2. Визначаємо активний період
         User user = userSession.getCurrentUser();
         String initialPeriodLabel = "All time";
 
@@ -102,10 +101,8 @@ public class AnalyticsController {
             }
         }
 
-        // 3. Встановлюємо значення (це автоматично викличе слухача і завантажить графіки)
         periodComboBox.setValue(initialPeriodLabel);
 
-        // На випадок, якщо слухач не спрацював (наприклад, якщо значення не змінилося)
         loadData();
         updateChartsAndInsights();
     }
@@ -129,6 +126,7 @@ public class AnalyticsController {
                 customEndDate.setDisable(true);
                 currentStartDate = null;
                 currentEndDate = null;
+                resetDateCellFactories(); // Знімаємо обмеження з календарів
                 loadData();
                 updateChartsAndInsights();
             } else if ("Custom dates".equals(newVal)) {
@@ -137,12 +135,17 @@ public class AnalyticsController {
                 customEndDate.setDisable(false);
                 customStartDate.setValue(currentStartDate);
                 customEndDate.setValue(currentEndDate);
+                resetDateCellFactories(); // Знімаємо обмеження з календарів
             } else {
                 for (BudgetPeriod p : budgetService.getAllPeriods(userSession.getCurrentUser())) {
                     if (formatPeriodLabel(p).equals(newVal)) {
                         selectedPeriod = p;
                         currentStartDate = p.getStartDate();
                         currentEndDate = p.getEndDate();
+
+                        // Фізично блокуємо дати поза межами обраного періоду
+                        restrictDatePickersToPeriod(p.getStartDate(), p.getEndDate());
+
                         customStartDate.setValue(currentStartDate);
                         customEndDate.setValue(currentEndDate);
                         customStartDate.setDisable(false);
@@ -156,8 +159,34 @@ public class AnalyticsController {
         });
     }
 
+    // Блокує дати в календарі, які не входять у вибраний період
+    private void restrictDatePickersToPeriod(LocalDate startBound, LocalDate endBound) {
+        Callback<DatePicker, DateCell> dayCellFactory = dp -> new DateCell() {
+            @Override
+            public void updateItem(LocalDate item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item.isBefore(startBound) || item.isAfter(endBound)) {
+                    setDisable(true);
+                    setStyle("-fx-background-color: #ffc0cb;"); // Світло-червоний фон для заблокованих дат
+                }
+            }
+        };
+        customStartDate.setDayCellFactory(dayCellFactory);
+        customEndDate.setDayCellFactory(dayCellFactory);
+    }
+
+    // Знімає всі обмеження з календарів
+    private void resetDateCellFactories() {
+        customStartDate.setDayCellFactory(null);
+        customEndDate.setDayCellFactory(null);
+    }
+
     private String formatPeriodLabel(BudgetPeriod period) {
-        return period.getStartDate() + " – " + period.getEndDate();
+        String label = period.getStartDate() + " – " + period.getEndDate();
+        if (period.isActive()) {
+            label += " (Active)";
+        }
+        return label;
     }
 
     private void loadPeriodsIntoComboBox() {
@@ -178,16 +207,20 @@ public class AnalyticsController {
     }
 
     private void applyCustomFilter() {
-        if (!"Custom dates".equals(periodComboBox.getValue())) return;
+        if (!"Custom dates".equals(periodComboBox.getValue()) && selectedPeriod == null) return;
+
         LocalDate start = SmartDateFormatter.getDate(customStartDate);
         LocalDate end = SmartDateFormatter.getDate(customEndDate);
         if (start == null || end == null) return;
+
         if (start.isAfter(end)) {
             navigationService.showAlert("Invalid Range", "Start date cannot be after end date.");
             customStartDate.setValue(currentStartDate);
             customEndDate.setValue(currentEndDate);
             return;
         }
+
+        // Додаткова перевірка, навіть попри обмеження в календарі (на випадок ручного вводу тексту)
         if (selectedPeriod != null) {
             if (start.isBefore(selectedPeriod.getStartDate()) || end.isAfter(selectedPeriod.getEndDate())) {
                 navigationService.showAlert("Invalid Range",
@@ -198,6 +231,7 @@ public class AnalyticsController {
                 return;
             }
         }
+
         currentStartDate = start;
         currentEndDate = end;
         loadData();
@@ -383,17 +417,14 @@ public class AnalyticsController {
         long overdue = statusCount.getOrDefault(TransactionStatus.OVERDUE, 0L);
         long total = completed + pending + overdue;
 
-        // Ініціалізуємо графік рівно ОДИН раз. Це фіксує легенду і не дає їй ламатися.
         if (!pieInitialized) {
             completedSlice = new PieChart.Data(TransactionStatus.COMPLETED.name(), 0);
             pendingSlice = new PieChart.Data(TransactionStatus.PENDING.name(), 0);
             overdueSlice = new PieChart.Data(TransactionStatus.OVERDUE.name(), 0);
             noDataSlice = new PieChart.Data("No data", 0);
 
-            // Додаємо абсолютно всі сектори в структуру назавжди
             statusPieChart.getData().addAll(completedSlice, pendingSlice, overdueSlice, noDataSlice);
 
-            // Вимикаємо тексти навколо торту - легенди достатньо, а текст створює візуальний хаос
             statusPieChart.setLabelsVisible(false);
             statusPieChart.setClockwise(true);
             statusPieChart.setLabelLineLength(10);
@@ -406,7 +437,6 @@ public class AnalyticsController {
             pieInitialized = true;
         }
 
-        // Оновлюємо значення секторів
         if (total == 0) {
             completedSlice.setPieValue(0);
             pendingSlice.setPieValue(0);
@@ -425,15 +455,12 @@ public class AnalyticsController {
             updateTooltipText(overdueSlice, TransactionStatus.OVERDUE.name() + ": " + overdue + " transactions");
         }
 
-        // КЕРУВАННЯ ВІЗУАЛОМ: Приховуємо нульові сектори і "No data" в легенді
         Platform.runLater(() -> {
-            // 1. Приховуємо самі шматки на торті, якщо їхнє значення 0 (щоб не було білих ліній)
             if (completedSlice.getNode() != null) completedSlice.getNode().setVisible(completed > 0);
             if (pendingSlice.getNode() != null) pendingSlice.getNode().setVisible(pending > 0);
             if (overdueSlice.getNode() != null) overdueSlice.getNode().setVisible(overdue > 0);
             if (noDataSlice.getNode() != null) noDataSlice.getNode().setVisible(total == 0);
 
-            // 2. Примусово фарбуємо легенду і ховаємо пункт "No data" з легенди
             for (Node node : statusPieChart.lookupAll(".chart-legend-item")) {
                 if (node instanceof Label label) {
                     String text = label.getText();
@@ -490,13 +517,8 @@ public class AnalyticsController {
 
     private void updateInsights() {
         insightsContainer.getChildren().clear();
-        if (currentStartDate == null || currentEndDate == null) {
-            Label empty = new Label("Select a period to see insights.");
-            empty.getStyleClass().add("insight-empty");
-            insightsContainer.getChildren().add(empty);
-            return;
-        }
 
+        // Викликаємо сервіс з поточними датами (якщо All time - вони будуть null)
         List<MLInsight> insights = mlService.generateInsights(
                 userSession.getCurrentUser(), currentStartDate, currentEndDate);
 

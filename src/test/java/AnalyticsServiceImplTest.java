@@ -2,28 +2,42 @@ import com.qsaj.balarama.v1.model.*;
 import com.qsaj.balarama.v1.model.enums.*;
 import com.qsaj.balarama.v1.repository.TransactionRepository;
 import com.qsaj.balarama.v1.repository.impl.TransactionRepositoryImpl;
+import com.qsaj.balarama.v1.service.BudgetService;
 import com.qsaj.balarama.v1.service.MLService;
-import com.qsaj.balarama.v1.service.impl.MLServiceImpl;
+import com.qsaj.balarama.v1.service.impl.AnalyticsServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
-class MLServiceImplTest extends DatabaseTest {
+class AnalyticsServiceImplTest extends DatabaseTest {
 
     private MLService mlService;
     private User testUser;
     private CategoryGroup testGroup;
     private CategoryItem testItem;
 
+    // Створюємо мок для нового сервісу, від якого тепер залежить MLServiceImpl
+    @Mock
+    private BudgetService budgetService;
+
     @BeforeEach
     void setUp() {
+        // Ініціалізуємо моки
+        MockitoAnnotations.openMocks(this);
+
         TransactionRepository txRepo = new TransactionRepositoryImpl(() -> em);
-        mlService = new MLServiceImpl(txRepo);
+
+        // Тепер передаємо ОБИДВА параметри
+        mlService = new AnalyticsServiceImpl(txRepo, budgetService);
 
         executeInTransaction(() -> {
             testUser = User.builder()
@@ -68,6 +82,9 @@ class MLServiceImplTest extends DatabaseTest {
 
     @Test
     void testGenerateInsightsWithData() {
+        // Налаштовуємо мок, щоб він повертав null (ми не тестуємо бюджети в цьому конкретному тесті)
+        when(budgetService.getActivePeriod(any(User.class))).thenReturn(null);
+
         LocalDate start = LocalDate.now().minusMonths(6);
         LocalDate end = LocalDate.now();
         List<MLInsight> insights = mlService.generateInsights(testUser, start, end);
@@ -76,6 +93,7 @@ class MLServiceImplTest extends DatabaseTest {
         // Перевіряємо, що є різні типи інсайтів
         boolean hasSpendingPattern = insights.stream().anyMatch(i -> i.getType() == MLInsight.InsightType.SPENDING_PATTERN);
         boolean hasForecast = insights.stream().anyMatch(i -> i.getType() == MLInsight.InsightType.FORECAST);
+
         assertThat(hasSpendingPattern).isTrue();
         assertThat(hasForecast).isTrue();
     }

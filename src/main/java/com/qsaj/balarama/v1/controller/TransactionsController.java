@@ -153,34 +153,6 @@ public class TransactionsController {
             @Override
             public T fromString(String string) { return null; }
         });
-
-        comboBox.setButtonCell(new ListCell<T>() {
-            @Override
-            protected void updateItem(T item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(comboBox.getPromptText());
-                } else {
-                    if (item instanceof CategoryGroup) setText(((CategoryGroup) item).getName());
-                    else if (item instanceof CategoryItem) setText(((CategoryItem) item).getName());
-                    else setText(item.toString());
-                }
-            }
-        });
-
-        comboBox.setCellFactory(lv -> new ListCell<T>() {
-            @Override
-            protected void updateItem(T item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    if (item instanceof CategoryGroup) setText(((CategoryGroup) item).getName());
-                    else if (item instanceof CategoryItem) setText(((CategoryItem) item).getName());
-                    else setText(item.toString());
-                }
-            }
-        });
     }
 
     private void setupFilterListeners() {
@@ -425,7 +397,7 @@ public class TransactionsController {
                 if (transactionToEdit == null) {
                     groupBox.getSelectionModel().selectFirst();
                 }
-                addTransactionButton.setText(transactionToEdit == null ? "Add Transaction" : "Update Transaction");
+                addTransactionButton.setText(transactionToEdit == null ? "Add" : "Update");
                 boolean income = newV == TransactionType.INCOME;
                 statusBox.setDisable(income);
                 priorityBox.setDisable(income);
@@ -486,7 +458,7 @@ public class TransactionsController {
         statusBox.setValue(TransactionStatus.COMPLETED);
         priorityBox.setValue(Priority.STANDARD);
 
-        addTransactionButton.setText("Add Transaction");
+        addTransactionButton.setText("Add");
         addTransactionButton.getStyleClass().remove("button-state-edit");
 
         datePicker.getStyleClass().remove("field-error");
@@ -526,25 +498,44 @@ public class TransactionsController {
 
     private void setupTableColumns() {
         String symbol = userSession.getCurrentUser().getCurrency() != null ? userSession.getCurrentUser().getCurrency().getSymbol() : "$";
+
         colDate.setCellValueFactory(d -> new SimpleObjectProperty<>(d.getValue().getDate()));
+        colDate.setCellFactory(c -> new HoverPopupTableCell<LocalDate>() {
+            @Override
+            protected void updateItem(LocalDate item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    applyPopupIfTruncated(null);
+                } else {
+                    String formatted = item.format(DATE_FORMATTER);
+                    setText(formatted);
+                    applyPopupIfTruncated(formatted);
+                }
+            }
+        });
+
         colTitle.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getTitle()));
-        colTitle.setCellFactory(c -> new TransactionTitleCell());
+        colTitle.setCellFactory(c -> new TextPopupCell());
 
         colType.setCellValueFactory(d -> new SimpleObjectProperty<>(d.getValue().getType()));
-        colType.setCellFactory(col -> new TableCell<Transaction, TransactionType>() {
+        colType.setCellFactory(col -> new HoverPopupTableCell<TransactionType>() {
             @Override
             protected void updateItem(TransactionType item, boolean empty) {
                 super.updateItem(item, empty);
                 getStyleClass().removeAll("amount-income", "amount-expense", "amount-transfer");
                 if (empty || item == null) {
                     setText(null);
+                    applyPopupIfTruncated(null);
                 } else {
-                    setText(item.name());
+                    String txt = item.name();
+                    setText(txt);
                     switch (item) {
                         case INCOME -> getStyleClass().add("amount-income");
                         case EXPENSE -> getStyleClass().add("amount-expense");
                         case TRANSFER -> getStyleClass().add("amount-transfer");
                     }
+                    applyPopupIfTruncated(txt);
                 }
             }
         });
@@ -553,19 +544,39 @@ public class TransactionsController {
             String name = d.getValue().getSnapshotGroupName();
             return new SimpleStringProperty(name != null ? name : "Unknown");
         });
+        colCategory.setCellFactory(c -> new TextPopupCell());
 
         colSubcategory.setCellValueFactory(d -> {
             String name = d.getValue().getSnapshotItemName();
             return new SimpleStringProperty(name != null ? name : "Unknown");
         });
+        colSubcategory.setCellFactory(c -> new TextPopupCell());
 
         colStatus.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getStatus().name()));
         colStatus.setCellFactory(c -> new StatusTableCell());
+
         colDueDate.setCellValueFactory(d -> new SimpleObjectProperty<>(d.getValue().getDueDate()));
+        colDueDate.setCellFactory(c -> new HoverPopupTableCell<LocalDate>() {
+            @Override
+            protected void updateItem(LocalDate item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    applyPopupIfTruncated(null);
+                } else {
+                    String formatted = item.format(DATE_FORMATTER);
+                    setText(formatted);
+                    applyPopupIfTruncated(formatted);
+                }
+            }
+        });
+
         colNotes.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getNotes()));
-        colNotes.setCellFactory(c -> new NotesTableCell());
+        colNotes.setCellFactory(c -> new TextPopupCell());
+
         colAmount.setCellValueFactory(d -> new SimpleObjectProperty<>(d.getValue().getAmount()));
         colAmount.setCellFactory(c -> new AmountTableCell(symbol));
+
         colAction.setCellFactory(c -> new ActionTableCell(this));
     }
 
@@ -695,7 +706,7 @@ public class TransactionsController {
         dueDatePicker.setValue(t.getDueDate());
         notesArea.setText(t.getNotes() != null ? t.getNotes() : "");
 
-        addTransactionButton.setText("Update Transaction");
+        addTransactionButton.setText("Update");
         if (!addTransactionButton.getStyleClass().contains("button-state-edit"))
             addTransactionButton.getStyleClass().add("button-state-edit");
     }
