@@ -23,7 +23,7 @@
         <String fx:value="/css/analytics.css"/>
     </stylesheets>
 
-    <Label text="Analytics &amp; ML Insights" styleClass="page-title"/>
+    <Label text="Analytics &amp; Insights" styleClass="page-title"/>
 
     <HBox spacing="15" alignment="CENTER_LEFT" styleClass="content-card">
         <Label text="Period:" styleClass="input-label"/>
@@ -85,7 +85,7 @@
             </VBox>
 
             <VBox styleClass="content-card" spacing="10" VBox.vgrow="ALWAYS">
-                <Label text="ML Insights" styleClass="card-title"/>
+                <Label text="Insights" styleClass="card-title"/>
                 <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
                     <VBox fx:id="insightsContainer" spacing="15"/>
                 </ScrollPane>
