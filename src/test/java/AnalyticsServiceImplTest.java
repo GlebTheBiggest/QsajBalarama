@@ -3,7 +3,7 @@ import com.qsaj.balarama.v1.model.enums.*;
 import com.qsaj.balarama.v1.repository.TransactionRepository;
 import com.qsaj.balarama.v1.repository.impl.TransactionRepositoryImpl;
 import com.qsaj.balarama.v1.service.BudgetService;
-import com.qsaj.balarama.v1.service.MLService;
+import com.qsaj.balarama.v1.service.AnalyticsService;
 import com.qsaj.balarama.v1.service.impl.AnalyticsServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 
 class AnalyticsServiceImplTest extends DatabaseTest {
 
-    private MLService mlService;
+    private AnalyticsService analyticsService;
     private User testUser;
     private CategoryGroup testGroup;
     private CategoryItem testItem;
@@ -37,7 +37,7 @@ class AnalyticsServiceImplTest extends DatabaseTest {
         TransactionRepository txRepo = new TransactionRepositoryImpl(() -> em);
 
         // Тепер передаємо ОБИДВА параметри
-        mlService = new AnalyticsServiceImpl(txRepo, budgetService);
+        analyticsService = new AnalyticsServiceImpl(txRepo, budgetService);
 
         executeInTransaction(() -> {
             testUser = User.builder()
@@ -87,7 +87,7 @@ class AnalyticsServiceImplTest extends DatabaseTest {
 
         LocalDate start = LocalDate.now().minusMonths(6);
         LocalDate end = LocalDate.now();
-        List<MLInsight> insights = mlService.generateInsights(testUser, start, end);
+        List<MLInsight> insights = analyticsService.generateInsights(testUser, start, end);
 
         assertThat(insights).isNotEmpty();
         // Перевіряємо, що є різні типи інсайтів
@@ -102,7 +102,7 @@ class AnalyticsServiceImplTest extends DatabaseTest {
     void testGenerateInsightsEmpty() {
         LocalDate start = LocalDate.now().plusMonths(1);
         LocalDate end = LocalDate.now().plusMonths(2);
-        List<MLInsight> insights = mlService.generateInsights(testUser, start, end);
+        List<MLInsight> insights = analyticsService.generateInsights(testUser, start, end);
 
         assertThat(insights).hasSize(1);
         assertThat(insights.get(0).getTitle()).isEqualTo("No Data");

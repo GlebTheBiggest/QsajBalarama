@@ -6,7 +6,7 @@ import com.qsaj.balarama.v1.model.enums.Priority;
 import com.qsaj.balarama.v1.model.enums.TransactionType;
 import com.qsaj.balarama.v1.repository.TransactionRepository;
 import com.qsaj.balarama.v1.service.BudgetService;
-import com.qsaj.balarama.v1.service.MLService;
+import com.qsaj.balarama.v1.service.AnalyticsService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -15,7 +15,7 @@ import java.time.YearMonth;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class AnalyticsServiceImpl implements MLService {
+public class AnalyticsServiceImpl implements AnalyticsService {
 
     private final TransactionRepository transactionRepository;
     private final BudgetService budgetService;

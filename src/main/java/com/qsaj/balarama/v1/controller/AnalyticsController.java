@@ -11,7 +11,7 @@ import com.qsaj.balarama.v1.model.enums.TransactionStatus;
 import com.qsaj.balarama.v1.model.enums.TransactionType;
 import com.qsaj.balarama.v1.service.BudgetService;
 import com.qsaj.balarama.v1.service.FinanceService;
-import com.qsaj.balarama.v1.service.MLService;
+import com.qsaj.balarama.v1.service.AnalyticsService;
 import com.qsaj.balarama.v1.service.NavigationService;
 import com.qsaj.balarama.v1.session.UserSession;
 import com.qsaj.balarama.v1.util.SmartDateFormatter;
@@ -51,7 +51,7 @@ public class AnalyticsController {
 
     private final UserSession userSession;
     private final FinanceService financeService;
-    private final MLService mlService;
+    private final AnalyticsService analyticsService;
     private final BudgetService budgetService;
     private final NavigationService navigationService;
     private List<Transaction> allTransactions;
@@ -71,11 +71,11 @@ public class AnalyticsController {
 
     @Inject
     public AnalyticsController(UserSession userSession, FinanceService financeService,
-                               MLService mlService, BudgetService budgetService,
+                               AnalyticsService analyticsService, BudgetService budgetService,
                                NavigationService navigationService) {
         this.userSession = userSession;
         this.financeService = financeService;
-        this.mlService = mlService;
+        this.analyticsService = analyticsService;
         this.budgetService = budgetService;
         this.navigationService = navigationService;
     }
@@ -519,7 +519,7 @@ public class AnalyticsController {
         insightsContainer.getChildren().clear();
 
         // Викликаємо сервіс з поточними датами (якщо All time - вони будуть null)
-        List<MLInsight> insights = mlService.generateInsights(
+        List<MLInsight> insights = analyticsService.generateInsights(
                 userSession.getCurrentUser(), currentStartDate, currentEndDate);
 
         for (MLInsight insight : insights) {

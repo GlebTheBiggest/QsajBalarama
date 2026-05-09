@@ -6,6 +6,6 @@ import com.qsaj.balarama.v1.model.User;
 import java.time.LocalDate;
 import java.util.List;
 
-public interface MLService {
+public interface AnalyticsService {
     List<MLInsight> generateInsights(User user, LocalDate startDate, LocalDate endDate);
 }

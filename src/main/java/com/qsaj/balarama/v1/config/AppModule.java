@@ -31,7 +31,7 @@ public class AppModule extends AbstractModule {
         bind(CategoryBudgetRepository.class).to(CategoryBudgetRepositoryImpl.class).in(Singleton.class);
         bind(EventRepository.class).to(EventRepositoryImpl.class);
         bind(EventService.class).to(EventServiceImpl.class);
-        bind(MLService.class).to(AnalyticsServiceImpl.class).in(Singleton.class);
+        bind(AnalyticsService.class).to(AnalyticsServiceImpl.class).in(Singleton.class);
     }
 
     @Provides
