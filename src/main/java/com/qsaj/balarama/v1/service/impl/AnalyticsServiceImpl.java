@@ -27,8 +27,8 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     }
 
     @Override
-    public List<MLInsight> generateInsights(User user, LocalDate startDate, LocalDate endDate) {
-        List<MLInsight> insights = new ArrayList<>();
+    public List<Insight> generateInsights(User user, LocalDate startDate, LocalDate endDate) {
+        List<Insight> insights = new ArrayList<>();
 
         // 1. Отримуємо транзакції з бази. Якщо startDate та endDate == null (це All time)
         List<Transaction> allExpenseTransactions = transactionRepository.findAllByUser(user).stream()
@@ -52,8 +52,8 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
         // Якщо немає транзакцій - одразу повертаємо повідомлення
         if (transactionsToAnalyze.isEmpty()) {
-            insights.add(MLInsight.builder()
-                    .type(MLInsight.InsightType.SPENDING_PATTERN)
+            insights.add(Insight.builder()
+                    .type(Insight.InsightType.SPENDING_PATTERN)
                     .title("No Data")
                     .description("No expense transactions found for the selected period.")
                     .suggestion("Add some transactions to get personalized insights.")
@@ -83,7 +83,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         // --- Генерація інсайтів (БЕЗ обмежень по кількості транзакцій) ---
 
         // 1. Головний прогноз: Загальний бюджет на наступний місяць
-        MLInsight totalForecast = forecastTotalBudget(transactionsToAnalyze);
+        Insight totalForecast = forecastTotalBudget(transactionsToAnalyze);
         if (totalForecast != null) insights.add(totalForecast);
 
         // 2. Аналіз ТОП-3 категорій
@@ -106,7 +106,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         }
 
         return insights.stream()
-                .sorted(Comparator.comparing(MLInsight::getConfidence).reversed())
+                .sorted(Comparator.comparing(Insight::getConfidence).reversed())
                 .limit(12) // Ліміт на вивід найважливіших
                 .collect(Collectors.toList());
     }
@@ -137,8 +137,8 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         return result;
     }
 
-    private List<MLInsight> analyzeSpendingByCategory(Map<String, BigDecimal> categorySpending, List<String> topCategories, BigDecimal totalSpent) {
-        List<MLInsight> insights = new ArrayList<>();
+    private List<Insight> analyzeSpendingByCategory(Map<String, BigDecimal> categorySpending, List<String> topCategories, BigDecimal totalSpent) {
+        List<Insight> insights = new ArrayList<>();
         if (totalSpent.compareTo(BigDecimal.ZERO) == 0) return insights;
 
         for (String cat : topCategories) {
@@ -147,8 +147,8 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
             // Якщо категорія з'їдає більше 30% загальних витрат
             if (percentage > 30) {
-                insights.add(MLInsight.builder()
-                        .type(MLInsight.InsightType.SPENDING_PATTERN)
+                insights.add(Insight.builder()
+                        .type(Insight.InsightType.SPENDING_PATTERN)
                         .title("High spending in " + cat)
                         .description(String.format("You spent %.1f%% of your total expenses on %s (%.2f).", percentage, cat, amount))
                         .suggestion("Keep an eye on this category as it takes up a major part of your expenses.")
@@ -160,8 +160,8 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         return insights;
     }
 
-    private List<MLInsight> recommendCategoryLimits(Map<String, BigDecimal> categorySpending, List<String> topCategories) {
-        List<MLInsight> insights = new ArrayList<>();
+    private List<Insight> recommendCategoryLimits(Map<String, BigDecimal> categorySpending, List<String> topCategories) {
+        List<Insight> insights = new ArrayList<>();
 
         for (String cat : topCategories) {
             BigDecimal spent = categorySpending.get(cat);
@@ -169,8 +169,8 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 // Радимо ліміт = витрати + 10% буфера
                 BigDecimal recommendedLimit = spent.multiply(BigDecimal.valueOf(1.10)).setScale(2, RoundingMode.HALF_UP);
 
-                insights.add(MLInsight.builder()
-                        .type(MLInsight.InsightType.BUDGET_RECOMMENDATION)
+                insights.add(Insight.builder()
+                        .type(Insight.InsightType.BUDGET_RECOMMENDATION)
                         .title("Limit suggestion for " + cat)
                         .description(String.format("You spent %.2f on %s during this period.", spent, cat))
                         .suggestion(String.format("Consider setting a category limit of %.2f to have a comfortable buffer.", recommendedLimit))
@@ -183,7 +183,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         return insights;
     }
 
-    private MLInsight forecastTotalBudget(List<Transaction> transactions) {
+    private Insight forecastTotalBudget(List<Transaction> transactions) {
         // Групуємо витрати по місяцях (незалежно від категорій)
         Map<YearMonth, BigDecimal> monthlyTotal = transactions.stream()
                 .collect(Collectors.groupingBy(
@@ -241,8 +241,8 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         // Рекомендований загальний бюджет = прогноз + 5% буфера
         BigDecimal recommendedTotalBudget = BigDecimal.valueOf(predicted * 1.05).setScale(2, RoundingMode.HALF_UP);
 
-        return MLInsight.builder()
-                .type(MLInsight.InsightType.FORECAST)
+        return Insight.builder()
+                .type(Insight.InsightType.FORECAST)
                 .title("Total Budget Forecast")
                 .description(String.format("Based on your overall spending habits, your estimated total expenses for the next month are %.2f.", predicted))
                 .suggestion(String.format("Consider setting a total monthly budget of around %.2f to cover all your needs safely.", recommendedTotalBudget))
@@ -251,7 +251,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 .build();
     }
 
-    private List<MLInsight> detectSeasonalTrends(List<Transaction> transactions) {
+    private List<Insight> detectSeasonalTrends(List<Transaction> transactions) {
         Map<Integer, Map<Integer, BigDecimal>> monthlySpending = new HashMap<>();
         for (Transaction t : transactions) {
             int month = t.getDate().getMonthValue();
@@ -260,7 +260,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                     .merge(month, t.getAmount(), BigDecimal::add);
         }
 
-        List<MLInsight> insights = new ArrayList<>();
+        List<Insight> insights = new ArrayList<>();
         if (monthlySpending.size() >= 2 || (monthlySpending.size() == 1 && monthlySpending.values().iterator().next().size() >= 2)) {
             int lastYear = monthlySpending.keySet().stream().max(Integer::compareTo).orElse(0);
             if (lastYear > 0 && monthlySpending.get(lastYear) != null) {
@@ -280,8 +280,8 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                     if (avgPrev.compareTo(BigDecimal.ZERO) > 0) {
                         double change = lastMonthSpent.subtract(avgPrev).divide(avgPrev, 2, RoundingMode.HALF_UP).doubleValue() * 100;
                         if (Math.abs(change) > 20) {
-                            insights.add(MLInsight.builder()
-                                    .type(MLInsight.InsightType.SEASONAL_TREND)
+                            insights.add(Insight.builder()
+                                    .type(Insight.InsightType.SEASONAL_TREND)
                                     .title(change > 0 ? "Spending increased" : "Spending decreased")
                                     .description(String.format("Last month spending changed by %.1f%% compared to your average.", change))
                                     .suggestion(change > 0 ? "Review recent large expenses." : "Great job saving money!")
@@ -295,17 +295,17 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         return insights;
     }
 
-    private List<MLInsight> analyzePriorities(List<Transaction> transactions, Map<String, Priority> categoryPriority) {
+    private List<Insight> analyzePriorities(List<Transaction> transactions, Map<String, Priority> categoryPriority) {
         Map<Priority, Long> priorityCount = transactions.stream()
                 .collect(Collectors.groupingBy(Transaction::getPriority, Collectors.counting()));
         long total = transactions.size();
-        List<MLInsight> insights = new ArrayList<>();
+        List<Insight> insights = new ArrayList<>();
 
         for (Map.Entry<Priority, Long> entry : priorityCount.entrySet()) {
             double percentage = entry.getValue() * 100.0 / total;
             if (percentage > 50) {
-                insights.add(MLInsight.builder()
-                        .type(MLInsight.InsightType.PRIORITY_ANALYSIS)
+                insights.add(Insight.builder()
+                        .type(Insight.InsightType.PRIORITY_ANALYSIS)
                         .title(entry.getKey() + " transactions dominate")
                         .description(String.format("%.1f%% of your expenses are %s priority.", percentage, entry.getKey().name().toLowerCase()))
                         .suggestion(entry.getKey() == Priority.ESSENTIAL ?
@@ -318,8 +318,8 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         return insights;
     }
 
-    private List<MLInsight> detectAnomalies(List<Transaction> transactions) {
-        List<MLInsight> anomalies = new ArrayList<>();
+    private List<Insight> detectAnomalies(List<Transaction> transactions) {
+        List<Insight> anomalies = new ArrayList<>();
         double[] amounts = transactions.stream()
                 .mapToDouble(t -> t.getAmount().doubleValue())
                 .toArray();
@@ -337,8 +337,8 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
         for (Transaction t : transactions) {
             if (t.getAmount().doubleValue() > threshold) {
-                anomalies.add(MLInsight.builder()
-                        .type(MLInsight.InsightType.ANOMALY_DETECTION)
+                anomalies.add(Insight.builder()
+                        .type(Insight.InsightType.ANOMALY_DETECTION)
                         .title("Unusually large expense")
                         .description(String.format("Transaction '%s' (%.2f) is significantly higher than your average expense (%.2f).",
                                 t.getTitle(), t.getAmount(), mean))
@@ -353,8 +353,8 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         return anomalies;
     }
 
-    private List<MLInsight> suggestTransferFromLowPriority(User user, List<Transaction> transactions, Map<String, Priority> categoryPriority) {
-        List<MLInsight> insights = new ArrayList<>();
+    private List<Insight> suggestTransferFromLowPriority(User user, List<Transaction> transactions, Map<String, Priority> categoryPriority) {
+        List<Insight> insights = new ArrayList<>();
         BudgetPeriod activePeriod = budgetService.getActivePeriod(user);
         if (activePeriod == null) return insights;
 
@@ -386,8 +386,8 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                     BigDecimal otherRemaining = otherAllocated.subtract(otherSpent);
 
                     if (otherRemaining.compareTo(BigDecimal.ZERO) > 0 && otherPriority.ordinal() < thisPriority.ordinal()) {
-                        insights.add(MLInsight.builder()
-                                .type(MLInsight.InsightType.BUDGET_RECOMMENDATION)
+                        insights.add(Insight.builder()
+                                .type(Insight.InsightType.BUDGET_RECOMMENDATION)
                                 .title("Budget alert for " + category)
                                 .description(String.format("Only %.2f left in %s limit.", remaining, category))
                                 .suggestion(String.format("Consider moving funds from '%s' (surplus: %.2f, lower priority).", otherCat, otherRemaining))
@@ -403,8 +403,8 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         return insights;
     }
 
-    private List<MLInsight> suggestBudgetIncrease(User user, List<Transaction> transactions) {
-        List<MLInsight> insights = new ArrayList<>();
+    private List<Insight> suggestBudgetIncrease(User user, List<Transaction> transactions) {
+        List<Insight> insights = new ArrayList<>();
         BudgetPeriod activePeriod = budgetService.getActivePeriod(user);
         if (activePeriod == null) return insights;
 
@@ -426,8 +426,8 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
             if (allocated.compareTo(BigDecimal.ZERO) > 0 && spent.compareTo(allocated) > 0) {
                 double overuse = spent.subtract(allocated).divide(allocated, 2, RoundingMode.HALF_UP).doubleValue() * 100;
-                insights.add(MLInsight.builder()
-                        .type(MLInsight.InsightType.BUDGET_RECOMMENDATION)
+                insights.add(Insight.builder()
+                        .type(Insight.InsightType.BUDGET_RECOMMENDATION)
                         .title("Limit exceeded for " + category)
                         .description(String.format("You spent %.1f%% more than your set limit for %s.", overuse, category))
                         .suggestion(String.format("Consider increasing the limit for %s from %.2f to %.2f.", category, allocated, spent))

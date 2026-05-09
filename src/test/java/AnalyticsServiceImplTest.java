@@ -87,12 +87,12 @@ class AnalyticsServiceImplTest extends DatabaseTest {
 
         LocalDate start = LocalDate.now().minusMonths(6);
         LocalDate end = LocalDate.now();
-        List<MLInsight> insights = analyticsService.generateInsights(testUser, start, end);
+        List<Insight> insights = analyticsService.generateInsights(testUser, start, end);
 
         assertThat(insights).isNotEmpty();
         // Перевіряємо, що є різні типи інсайтів
-        boolean hasSpendingPattern = insights.stream().anyMatch(i -> i.getType() == MLInsight.InsightType.SPENDING_PATTERN);
-        boolean hasForecast = insights.stream().anyMatch(i -> i.getType() == MLInsight.InsightType.FORECAST);
+        boolean hasSpendingPattern = insights.stream().anyMatch(i -> i.getType() == Insight.InsightType.SPENDING_PATTERN);
+        boolean hasForecast = insights.stream().anyMatch(i -> i.getType() == Insight.InsightType.FORECAST);
 
         assertThat(hasSpendingPattern).isTrue();
         assertThat(hasForecast).isTrue();
@@ -102,7 +102,7 @@ class AnalyticsServiceImplTest extends DatabaseTest {
     void testGenerateInsightsEmpty() {
         LocalDate start = LocalDate.now().plusMonths(1);
         LocalDate end = LocalDate.now().plusMonths(2);
-        List<MLInsight> insights = analyticsService.generateInsights(testUser, start, end);
+        List<Insight> insights = analyticsService.generateInsights(testUser, start, end);
 
         assertThat(insights).hasSize(1);
         assertThat(insights.get(0).getTitle()).isEqualTo("No Data");

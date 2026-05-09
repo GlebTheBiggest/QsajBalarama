@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MLInsight {
+public class Insight {
     private String title;
     private String description;
     private String suggestion;

@@ -2,7 +2,7 @@ package com.qsaj.balarama.v1.controller;
 
 import com.google.inject.Inject;
 import com.qsaj.balarama.v1.model.BudgetPeriod;
-import com.qsaj.balarama.v1.model.MLInsight;
+import com.qsaj.balarama.v1.model.Insight;
 import com.qsaj.balarama.v1.model.Transaction;
 import com.qsaj.balarama.v1.model.User;
 import com.qsaj.balarama.v1.model.enums.AppMode;
@@ -519,10 +519,10 @@ public class AnalyticsController {
         insightsContainer.getChildren().clear();
 
         // Викликаємо сервіс з поточними датами (якщо All time - вони будуть null)
-        List<MLInsight> insights = analyticsService.generateInsights(
+        List<Insight> insights = analyticsService.generateInsights(
                 userSession.getCurrentUser(), currentStartDate, currentEndDate);
 
-        for (MLInsight insight : insights) {
+        for (Insight insight : insights) {
             VBox card = new VBox(8);
             card.getStyleClass().add("insight-card");
 
